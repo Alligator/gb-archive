@@ -4,23 +4,68 @@
   --pico-form-element-spacing-vertical: 0.5rem;
 }
 
-table {
-  table-layout: fixed;
+main {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-thead {
-  position: sticky;
-  top: 0;
+main header {
+  display: flex;
 }
 
-table td {
-  vertical-align: top;
+dialog article {
+  max-width: 75vw;
+  height: 75vh;
+  display: flex;
+  margin: 0;
+  padding: 0;
 }
 
-table th:nth-child(1) {
-  width: 8rem;
+.virtual-parent {
+  flex: 1;
+  overflow: auto;;
 }
 
-table th:nth-child(3) {
-  width: 16rem;
+.list-item {
+  display: flex;
+  width: 100%;
+  border-bottom: var(--pico-border-width) solid var(--pico-table-border-color);
+  align-items: center;
+}
+
+.list-item:nth-child(odd) {
+  background-color: var(--pico-table-row-stripped-background-color);
+}
+
+.list-item:nth-child(even) {
+  background-color: var(--pico-background-color);
+}
+
+.list-item .date {
+  margin-left: 0.5em;
+  width: 10%;
+}
+
+.list-item .subject {
+  width: 20%;
+  text-align: right;
+}
+
+.list-item .title {
+  width: 70%;
+}
+
+.video-js button.embiggen-button {
+  background-image: url(assets/andre_down.png);
+  background-position: top;
+  background-repeat: no-repeat;
+}
+
+.video-js button.embiggen-button:hover {
+  background-image: url(assets/andre_up.png);
+}
+
+.video-js .hidden {
+  display: none;
 }
