@@ -1,0 +1,26 @@
+:root {
+  --pico-font-size: 12pt;
+  --pico-form-element-spacing-horizontal: 0.5rem;
+  --pico-form-element-spacing-vertical: 0.5rem;
+}
+
+table {
+  table-layout: fixed;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+}
+
+table td {
+  vertical-align: top;
+}
+
+table th:nth-child(1) {
+  width: 8rem;
+}
+
+table th:nth-child(3) {
+  width: 16rem;
+}
