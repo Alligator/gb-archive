@@ -132,8 +132,6 @@ const VideoPlayer: Component<{ id: string }> = props => {
 
   return <dialog open onClick={onDialogClick} class={embiggen() ? styles['dialog-embiggen'] : ''} >
     <article>
-      {/* <header class="embiggen-hide">{vid().title}</header>
-    <p class="embiggen-hide"><small>{vid().description}</small></p> */}
       <video class="video-js vjs-fill" ref={vidEl!} />
     </article>
   </dialog>;
@@ -234,7 +232,7 @@ const App: Component = () => {
               {props.item.date.toLocaleDateString()}
             </div>
             <div class='title'>
-              <span class={styles.video} onClick={[selectVideo, props.item]}>{props.item.title}</span>
+              <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
               <div class={styles.desc}>
                 <small>{props.item.description}</small>
               </div>

@@ -50,6 +50,7 @@ dialog article {
 .list-item .subject {
   width: 20%;
   text-align: right;
+  margin-right: 0.5em;
 }
 
 .list-item .title {
