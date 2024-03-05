@@ -32,6 +32,7 @@ interface VideoPlayerProps {
   id: string
   initialTime?: number
   onTimeUpdate: (id: string, time: number, duration: number) => void
+  onEnded?: () => void
 }
 
 const VideoPlayer: Component<VideoPlayerProps> = props => {
@@ -82,6 +83,10 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
 
     player.on('pause', () => {
       document.querySelector('.vjs-title-bar')?.classList.remove('hidden');
+    });
+
+    player.on('ended', () => {
+      props.onEnded?.();
     });
 
     // during playback, update localstorage
@@ -190,6 +195,16 @@ const App: Component = () => {
     );
   };
 
+  const onEnded = () => {
+    const vids = filteredVideos();
+    const idx = vids.findIndex(vid => vid.identifier === selectedVideo()?.identifier);
+    const nextVid = vids[idx + 1];
+    if (!nextVid) return;
+    // FIXME: since updating props on videos dont work atm just make sure it unmounts
+    setSelectedVideo(null);
+    setSelectedVideo(nextVid);
+  };
+
   return (
     <main class="container">
       <header>
@@ -243,7 +258,7 @@ const App: Component = () => {
         </VirtualContainer>
       </div>
       <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier][0]} onTimeUpdate={onTimeUpdate} />
+        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier]?.[0] ?? undefined} onTimeUpdate={onTimeUpdate} onEnded={onEnded} />
       }</Show>
     </main>
   );
