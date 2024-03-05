@@ -88,7 +88,56 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
         }
       },
       userActions: {
-        hotkeys: true,
+        hotkeys: function(this: Player, event: KeyboardEvent) {
+          switch (event.key) {
+          case ' ': {
+            if (this.paused()) {
+              this.play();
+            } else {
+              this.pause();
+            }
+            break;
+          }
+
+          case 'm': {
+            if (this.muted()) {
+              this.muted(false);
+            } else {
+              this.muted(true);
+            }
+            break;
+          }
+
+          case 'f': {
+            if (this.isFullscreen()) {
+              this.exitFullscreen();
+            } else {
+              this.requestFullscreen();
+            }
+            break;
+          }
+
+          case 'e': {
+            setEmbiggen(!embiggen());
+            break;
+          }
+
+          case 'ArrowLeft':
+          case 'ArrowRight': {
+            const currentTime = this.currentTime();
+            if (typeof currentTime !== 'undefined') {
+              const skipTime = event.key === 'ArrowLeft' ? -5 : 5;
+              this.currentTime(Math.max(currentTime + skipTime, 0));
+            }
+            break;
+          }
+
+          case 'Escape': {
+            setSelectedVideo(null);
+            break;
+          }
+          }
+        },
       },
     };
 
