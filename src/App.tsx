@@ -65,9 +65,9 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     player.loadMedia({
       title: `(${meta().metadata.date}) ${meta().metadata.title}`,
       description: meta().metadata.description,
-      poster: `https://archive.org/download/${props.id}/${thumb.name}`,
+      poster: thumb ? `https://archive.org/download/${props.id}/${thumb.name}` : undefined,
       src: [{ src, type: 'video/mp4' }]
-    }, () => {});
+    }, () => { });
   });
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
@@ -195,8 +195,11 @@ const App: Component = () => {
 
     if (filterState.sort === 'newest-first') {
       filteredVids.sort((a, b) => b.date.getTime() - a.date.getTime());
-    } else {
+    } else if (filterState.sort === 'oldest-first') {
       filteredVids.sort((a, b) => a.date.getTime() - b.date.getTime());
+    } else if (filterState.sort === 'video-title') {
+      filteredVids.sort((a, b) => a.title.localeCompare(b.title));
+
     }
     return filteredVids;
   };
@@ -235,6 +238,7 @@ const App: Component = () => {
         <select onChange={onSortChange} value={filterState.sort}>
           <option value="newest-first">Show newest first</option>
           <option value="oldest-first">Show oldest first</option>
+          <option value="video-title">Sort alphabetically</option>
         </select>
         <input type="search" onInput={search} placeholder='Video Title' value={filterState.title} />
         <Show when={shows().length > 0}>

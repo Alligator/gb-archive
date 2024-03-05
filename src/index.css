@@ -25,7 +25,6 @@ dialog article {
 .virtual-parent {
   flex: 1;
   overflow: auto;
-  ;
 }
 
 .list-item {
