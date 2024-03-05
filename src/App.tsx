@@ -65,7 +65,7 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     // initialize videojs, use loadmedia so we can specify metadta
     player = videojs(vidEl, videoJsOptions);
     player.loadMedia({
-      title: json.metadata.title,
+      title: `(${json.metadata.date}) ${json.metadata.title}`,
       description: json.metadata.description,
       poster: `https://archive.org/download/${props.id}/${thumb.name}`,
       src: [{ src, type: 'video/mp4' }]
@@ -74,15 +74,6 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
       if (props.initialTime && player.duration()! - props.initialTime > 30) {
         player.currentTime(props.initialTime);
       }
-    });
-
-    // for some reason the title bar is shown even while the video is playing???
-    player.on('play', () => {
-      document.querySelector('.vjs-title-bar')?.classList.add('hidden');
-    });
-
-    player.on('pause', () => {
-      document.querySelector('.vjs-title-bar')?.classList.remove('hidden');
     });
 
     player.on('ended', () => {
