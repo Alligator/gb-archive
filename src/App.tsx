@@ -13,22 +13,28 @@ import { produce } from 'solid-js/store';
 const [selectedVideo, setSelectedVideo] = createSignal<Video | null>(null);
 
 interface Video {
-  date: Date;
-  identifier: string;
-  subject: string;
-  title: string;
-  description: string;
+  date: Date
+  identifier: string
+  subject: string
+  title: string
+  description: string
 }
 
 interface VideoJson {
-  date: Date;
-  identifier: string;
-  subject: string | string[];
-  title: string;
-  description: string;
+  date: Date
+  identifier: string
+  subject: string | string[]
+  title: string
+  description: string
 }
 
-const VideoPlayer: Component<{ id: string, initialTime?: string, onTimeUpdate: (id: string, time: string) => void }> = props => {
+interface VideoPlayerProps {
+  id: string
+  initialTime?: number
+  onTimeUpdate: (id: string, time: number, duration: number) => void
+}
+
+const VideoPlayer: Component<VideoPlayerProps> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
@@ -61,10 +67,10 @@ const VideoPlayer: Component<{ id: string, initialTime?: string, onTimeUpdate: (
       title: json.metadata.title,
       description: json.metadata.description,
       poster: `https://archive.org/download/${props.id}/${thumb.name}`,
-      src: [{src, type: 'video/mp4'}]
+      src: [{ src, type: 'video/mp4' }]
     }, () => {
       // set current playback progress for the video if it exists
-      if (props.initialTime) {
+      if (props.initialTime && player.duration()! - props.initialTime > 30) {
         player.currentTime(props.initialTime);
       }
     });
@@ -80,7 +86,7 @@ const VideoPlayer: Component<{ id: string, initialTime?: string, onTimeUpdate: (
 
     // during playback, update localstorage
     player.on('timeupdate', () => {
-      props.onTimeUpdate(props.id, player.currentTime()!.toString());
+      props.onTimeUpdate(props.id, player.currentTime()!, player.duration()!);
     });
 
     // add the embiggen button to the player
@@ -176,10 +182,10 @@ const App: Component = () => {
     setFilterState({ sort: evt.currentTarget.value });
   };
 
-  const onTimeUpdate = (id: string, time: string) => {
+  const onTimeUpdate = (id: string, time: number, duration: number) => {
     setVideoStore(
       produce((s) => {
-        s.videos[id] = time;
+        s.videos[id] = [time, duration];
       }),
     );
   };
@@ -207,24 +213,37 @@ const App: Component = () => {
           scrollTarget={scrollTargetElement}
           itemSize={{ height: 60 }}
         >
-          {props => <div class={`list-item ${videoStore.videos[props.item.identifier] ? 'seen' : ''}`} style={props.style}>
-            <div class='date'>
-              {props.item.date.toLocaleDateString()}
-            </div>
-            <div class='title'>
-              <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
-              <div class={styles.desc}>
-                <small>{props.item.description}</small>
+          {props =>
+            <div
+              classList={{
+                'list-item': true,
+                'seen': videoStore.videos[props.item.identifier] !== undefined,
+                'odd': props.index % 2 === 0
+              }}
+              style={props.style}
+            >
+              <div class='date'>
+                {props.item.date.toLocaleDateString()}
               </div>
-            </div>
-            <div class='subject'>
-              {props.item.subject}
-            </div>
-          </div>}
+              <div class='title'>
+                <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
+                <Show when={videoStore.videos[props.item.identifier] !== undefined}>
+                  <progress
+                    value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
+                    max="100" />
+                </Show>
+                <div class={styles.desc}>
+                  <small>{props.item.description}</small>
+                </div>
+              </div>
+              <div class='subject'>
+                {props.item.subject}
+              </div>
+            </div>}
         </VirtualContainer>
       </div>
       <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier]} onTimeUpdate={onTimeUpdate} />
+        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier][0]} onTimeUpdate={onTimeUpdate} />
       }</Show>
     </main>
   );

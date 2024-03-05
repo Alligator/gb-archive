@@ -24,14 +24,20 @@ dialog article {
 
 .virtual-parent {
   flex: 1;
-  overflow: auto;;
+  overflow: auto;
+  ;
 }
 
 .list-item {
   display: flex;
   width: 100%;
   border-bottom: var(--pico-border-width) solid var(--pico-table-border-color);
+  background-color: var(--pico-background-color);
   align-items: center;
+}
+
+.list-item.odd {
+  background-color: var(--pico-table-row-stripped-background-color);
 }
 
 .list-item .date {
@@ -47,6 +53,12 @@ dialog article {
 
 .list-item .title {
   width: 70%;
+}
+
+.list-item progress {
+  margin-left: 1em;
+  width: 10%;
+  vertical-align: bottom;
 }
 
 .list-item.seen {

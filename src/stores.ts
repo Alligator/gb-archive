@@ -32,7 +32,7 @@ export function createFilterStore(): [FilterStore, SetStoreFunction<FilterStore>
 
 
 interface VideoStore {
-  videos: { [id: string]: string };
+  videos: { [id: string]: [number, number] };
 }
 
 export function createVideoStore(): [VideoStore, SetStoreFunction<VideoStore>] {
