@@ -79,7 +79,7 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
   onMount(async () => {
     // initialize the video player
     const videoJsOptions = {
-      autoplay: 'any',
+      autoplay: true, // 'any' doesn't work, muted videos when autoplay next
       controls: true,
       controlBar: {
         skipButtons: {
