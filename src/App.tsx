@@ -97,7 +97,11 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     // eslint-disable-next-line solid/reactivity
     player.on('ended', () => props.onEnded?.());
     // eslint-disable-next-line solid/reactivity
-    player.on('timeupdate', () => props.onTimeUpdate(videoId(), player.currentTime()!, player.duration()!));
+    player.on('timeupdate', () => {
+      if (Number.isNaN(player.currentTime())) return;
+      if (Number.isNaN(player.duration())) return;
+      props.onTimeUpdate(videoId(), player.currentTime()!, player.duration()!);
+    });
 
     // set current playback progress for the video if it exists
     player.on('loadedmetadata', () => {
