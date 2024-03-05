@@ -1,4 +1,4 @@
-import { onMount, type Component, createSignal, For, Show, onCleanup } from 'solid-js';
+import { onMount, type Component, createSignal, For, Show, onCleanup, createResource, createEffect } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 
@@ -35,8 +35,40 @@ interface VideoPlayerProps {
   onEnded?: () => void
 }
 
+const fetchMeta = async (id: string) => {
+  const resp = await fetch(`https://archive.org/metadata/${id}`);
+  return resp.json();
+};
+
 const VideoPlayer: Component<VideoPlayerProps> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
+  const [videoId, setVideoId] = createSignal('');
+
+  const [meta] = createResource(videoId, fetchMeta);
+
+  let vidEl: HTMLVideoElement;
+  let player: Player;
+
+  // we need a signal to pass into createResource so do this seemingly unnecessary thing here
+  createEffect(() => {
+    setVideoId(props.id);
+  });
+
+  // video id updated, load it into the player
+  createEffect(() => {
+    if (!meta()) return;
+
+    const video = meta().files.find((item: { format: string; }) => item.format === 'MPEG4');
+    const thumb = meta().files.find((item: { format: string; }) => item.format === 'Thumbnail');
+    const src = `https://archive.org/download/${props.id}/${video.name}`;
+
+    player.loadMedia({
+      title: `(${meta().metadata.date}) ${meta().metadata.title}`,
+      description: meta().metadata.description,
+      poster: `https://archive.org/download/${props.id}/${thumb.name}`,
+      src: [{ src, type: 'video/mp4' }]
+    }, () => {});
+  });
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
     if (evt.target === evt.currentTarget) {
@@ -44,45 +76,34 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     }
   };
 
-  let vidEl: HTMLVideoElement;
-  let player: Player;
-
-  // FIXME: this all shouldn't be in onmount, the async stuff can be handled some other way i think
   onMount(async () => {
-    // grab the metadata and then find the download url
-    const resp = await fetch(`https://archive.org/metadata/${props.id}`);
-    const json = await resp.json();
-    const video = json.files.find((item: { format: string; }) => item.format === 'MPEG4');
-    const thumb = json.files.find((item: { format: string; }) => item.format === 'Thumbnail');
-    const src = `https://archive.org/download/${props.id}/${video.name}`;
-
     // initialize the video player
     const videoJsOptions = {
-      autoplay: true,
+      autoplay: 'any',
       controls: true,
+      controlBar: {
+        skipButtons: {
+          backward: 5,
+          forward: 5,
+        }
+      },
+      userActions: {
+        hotkeys: true,
+      },
     };
 
     // initialize videojs, use loadmedia so we can specify metadta
     player = videojs(vidEl, videoJsOptions);
-    player.loadMedia({
-      title: `(${json.metadata.date}) ${json.metadata.title}`,
-      description: json.metadata.description,
-      poster: `https://archive.org/download/${props.id}/${thumb.name}`,
-      src: [{ src, type: 'video/mp4' }]
-    }, () => {
-      // set current playback progress for the video if it exists
+    // eslint-disable-next-line solid/reactivity
+    player.on('ended', () => props.onEnded?.());
+    // eslint-disable-next-line solid/reactivity
+    player.on('timeupdate', () => props.onTimeUpdate(videoId(), player.currentTime()!, player.duration()!));
+
+    // set current playback progress for the video if it exists
+    player.on('loadedmetadata', () => {
       if (props.initialTime && player.duration()! - props.initialTime > 30) {
         player.currentTime(props.initialTime);
       }
-    });
-
-    player.on('ended', () => {
-      props.onEnded?.();
-    });
-
-    // during playback, update localstorage
-    player.on('timeupdate', () => {
-      props.onTimeUpdate(props.id, player.currentTime()!, player.duration()!);
     });
 
     // add the embiggen button to the player
@@ -94,9 +115,8 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
       }
     });
     embiggenButton.addClass('embiggen-button');
-
-    // @ts-expect-error // here too
-    player.controlBar.addChild(embiggenButton, {}, player.controlBar.children_.length - 1);
+    const cb = player.getChild('controlBar');
+    cb?.addChild(embiggenButton, {}, cb.children_.length - 1);
   });
 
   onCleanup(() => {
@@ -191,8 +211,6 @@ const App: Component = () => {
     const idx = vids.findIndex(vid => vid.identifier === selectedVideo()?.identifier);
     const nextVid = vids[idx + 1];
     if (!nextVid) return;
-    // FIXME: since updating props on videos dont work atm just make sure it unmounts
-    setSelectedVideo(null);
     setSelectedVideo(nextVid);
   };
 
