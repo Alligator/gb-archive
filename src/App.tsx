@@ -1,5 +1,4 @@
-import { onMount, type Component, createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
-import { SetStoreFunction, createStore } from 'solid-js/store';
+import { onMount, type Component, createSignal, For, Show, onCleanup } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 
@@ -8,6 +7,7 @@ import { VirtualContainer } from '@minht11/solid-virtual-container';
 import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
+import { createFilterStore, createVideoStore } from './stores';
 
 const [selectedVideo, setSelectedVideo] = createSignal<Video | null>(null);
 
@@ -27,35 +27,7 @@ interface VideoJson {
   description: string;
 }
 
-interface State {
-  show: string;
-  title: string;
-  sort: string;
-}
-
-function createFilterStore(): [State, SetStoreFunction<State>] {
-  let initialState = {
-    show: '',
-    title: '',
-    sort: 'newest-first',
-  };
-
-  const lsState = window.localStorage.getItem('state');
-  if (lsState) {
-    initialState = JSON.parse(lsState);
-  }
-
-  const [store, setStore] = createStore<State>(initialState);
-
-  createEffect(() => {
-    // store the state in localstorage
-    window.localStorage.setItem('state', JSON.stringify(store));
-  });
-
-  return [store, setStore];
-}
-
-const VideoPlayer: Component<{ id: string }> = props => {
+const VideoPlayer: Component<{ id: string, time?: string, onTimeUpdate: (id: string, time: string) => void }> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
@@ -109,7 +81,7 @@ const VideoPlayer: Component<{ id: string }> = props => {
 
     // during playback, update localstorage
     player.on('timeupdate', () => {
-      window.localStorage.setItem(props.id, player.currentTime()!.toString());
+      props.onTimeUpdate(props.id, player.currentTime()!.toString());
     });
 
     // add the embiggen button to the player
@@ -141,6 +113,7 @@ const App: Component = () => {
   const [videos, setVideos] = createSignal<Video[]>([]);
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
+  const [videoStore, setVideoStore] = createVideoStore();
 
   let scrollTargetElement!: HTMLTableRowElement;
 
@@ -204,6 +177,14 @@ const App: Component = () => {
     setFilterState({ sort: evt.currentTarget.value });
   };
 
+  const onTimeUpdate = (id: string, time: string) => {
+    setVideoStore(
+      produce((s) => {
+        s.videos[id] = time;
+      }),
+    );
+  };
+
   return (
     <main class="container">
       <header>
@@ -227,7 +208,7 @@ const App: Component = () => {
           scrollTarget={scrollTargetElement}
           itemSize={{ height: 60 }}
         >
-          {props => <div class='list-item' style={props.style}>
+          {props => <div class={`list-item ${videoStore.videos[props.item.identifier] ? 'seen' : ''}`} style={props.style}>
             <div class='date'>
               {props.item.date.toLocaleDateString()}
             </div>
@@ -244,7 +225,7 @@ const App: Component = () => {
         </VirtualContainer>
       </div>
       <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer id={vid().identifier} />
+        <VideoPlayer id={vid().identifier} time={videoStore.videos[vid().identifier]} onTimeUpdate={onTimeUpdate} />
       }</Show>
     </main>
   );

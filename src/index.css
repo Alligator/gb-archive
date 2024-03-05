@@ -57,6 +57,10 @@ dialog article {
   width: 70%;
 }
 
+.list-item.seen {
+  color: var(--pico-muted-color);
+}
+
 .video-js button.embiggen-button {
   background-image: url(assets/andre_down.png);
   background-position: top;
