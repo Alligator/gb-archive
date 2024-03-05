@@ -182,7 +182,10 @@ const App: Component = () => {
   const filteredVideos = () => {
     let filteredVids = videos();
 
-    if (filterState.show !== '') {
+    if (filterState.show === 'watched-videos') {
+      filteredVids = filteredVids.filter(v => v.identifier in videoStore.videos);
+    }
+    else if (filterState.show !== '') {
       filteredVids = filteredVids.filter(v => v.subject === filterState.show);
     }
 
@@ -218,6 +221,14 @@ const App: Component = () => {
     setSelectedVideo(nextVid);
   };
 
+  const clearProgress = (id: string) => {
+    setVideoStore(
+      produce((s) => {
+        s.videos[id] = undefined!;
+      }),
+    );
+  };
+
   return (
     <main class="container">
       <header>
@@ -225,10 +236,11 @@ const App: Component = () => {
           <option value="newest-first">Show newest first</option>
           <option value="oldest-first">Show oldest first</option>
         </select>
-        <input type="search" onInput={search} value={filterState.title} />
+        <input type="search" onInput={search} placeholder='Video Title' value={filterState.title} />
         <Show when={shows().length > 0}>
           <select onChange={filterByShow} value={filterState.show}>
-            <option value="">(none)</option>
+            <option value="">All Shows</option>
+            <option value="watched-videos">Watched Videos</option>
             <For each={shows()}>{show =>
               <option value={show}>{show}</option>
             }</For>
@@ -257,6 +269,7 @@ const App: Component = () => {
                 <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
                 <Show when={videoStore.videos[props.item.identifier] !== undefined}>
                   <progress
+                    onClick={() => clearProgress(props.item.identifier)}
                     value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
                     max="100" />
                 </Show>

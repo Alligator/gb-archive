@@ -59,6 +59,7 @@ dialog article {
   margin-left: 1em;
   width: 10%;
   vertical-align: bottom;
+  cursor: not-allowed;
 }
 
 .list-item.seen {
