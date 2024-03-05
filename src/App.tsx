@@ -28,7 +28,7 @@ interface VideoJson {
   description: string;
 }
 
-const VideoPlayer: Component<{ id: string, time?: string, onTimeUpdate: (id: string, time: string) => void }> = props => {
+const VideoPlayer: Component<{ id: string, initialTime?: string, onTimeUpdate: (id: string, time: string) => void }> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
@@ -53,7 +53,6 @@ const VideoPlayer: Component<{ id: string, time?: string, onTimeUpdate: (id: str
     const videoJsOptions = {
       autoplay: true,
       controls: true,
-      // sources: [{src, type: 'video/mp4'}]
     };
 
     // initialize videojs, use loadmedia so we can specify metadta
@@ -65,9 +64,8 @@ const VideoPlayer: Component<{ id: string, time?: string, onTimeUpdate: (id: str
       src: [{src, type: 'video/mp4'}]
     }, () => {
       // set current playback progress for the video if it exists
-      const progress = window.localStorage.getItem(props.id);
-      if (progress) {
-        player.currentTime(progress);
+      if (props.initialTime) {
+        player.currentTime(props.initialTime);
       }
     });
 
@@ -116,7 +114,7 @@ const App: Component = () => {
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
 
-  let scrollTargetElement!: HTMLTableRowElement;
+  let scrollTargetElement!: HTMLDivElement;
 
   onMount(async () => {
     const resp = await fetch('archive-org.json');
@@ -226,7 +224,7 @@ const App: Component = () => {
         </VirtualContainer>
       </div>
       <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer id={vid().identifier} time={videoStore.videos[vid().identifier]} onTimeUpdate={onTimeUpdate} />
+        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier]} onTimeUpdate={onTimeUpdate} />
       }</Show>
     </main>
   );
