@@ -70,7 +70,7 @@ dialog article {
     }
   }
 
-  progress:hover + .reset {
+  progress:hover + .reset-button {
     opacity: 1;
   }
 
