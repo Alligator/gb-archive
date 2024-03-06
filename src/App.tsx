@@ -90,7 +90,7 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
         }
       },
       userActions: {
-        hotkeys: function(this: Player, event: KeyboardEvent) {
+        hotkeys: function (this: Player, event: KeyboardEvent) {
           switch (event.key) {
           case ' ': {
             if (this.paused()) {
@@ -322,13 +322,15 @@ const App: Component = () => {
                 {props.item.date.toLocaleDateString()}
               </div>
               <div class='title'>
-                <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
-                <Show when={videoStore.videos[props.item.identifier] !== undefined}>
-                  <progress
-                    onClick={() => clearProgress(props.item.identifier)}
-                    value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
-                    max="100" />
-                </Show>
+                <div class='line'>
+                  <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
+                  <Show when={videoStore.videos[props.item.identifier] !== undefined}>
+                    <progress
+                      value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
+                      max="100"/>
+                    <span class='reset' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
+                  </Show>
+                </div>
                 <div class={styles.desc}>
                   <small>{props.item.description}</small>
                 </div>
