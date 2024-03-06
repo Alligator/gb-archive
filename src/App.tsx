@@ -78,7 +78,7 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     }
   };
 
-  onMount(async () => {
+  onMount(() => {
     // initialize the video player
     const videoJsOptions = {
       autoplay: true, // 'any' doesn't work, muted videos when autoplay next
@@ -92,53 +92,49 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
       userActions: {
         hotkeys: function (this: Player, event: KeyboardEvent) {
           switch (event.key) {
-          case ' ': {
-            if (this.paused()) {
-              this.play();
-            } else {
-              this.pause();
+            case ' ': {
+              if (this.paused()) {
+                this.play();
+              } else {
+                this.pause();
+              }
+              break;
             }
-            break;
-          }
 
-          case 'm': {
-            if (this.muted()) {
-              this.muted(false);
-            } else {
-              this.muted(true);
+            case 'm': {
+              this.muted(!this.muted());
+              break;
             }
-            break;
-          }
 
-          case 'f': {
-            if (this.isFullscreen()) {
-              this.exitFullscreen();
-            } else {
-              this.requestFullscreen();
+            case 'f': {
+              if (this.isFullscreen()) {
+                this.exitFullscreen();
+              } else {
+                this.requestFullscreen();
+              }
+              break;
             }
-            break;
-          }
 
-          case 'e': {
-            setEmbiggen(!embiggen());
-            break;
-          }
-
-          case 'ArrowLeft':
-          case 'ArrowRight': {
-            const currentTime = this.currentTime();
-            if (typeof currentTime !== 'undefined') {
-              const skipTime = event.key === 'ArrowLeft' ? -5 : 5;
-              this.currentTime(Math.max(currentTime + skipTime, 0));
+            case 'e': {
+              setEmbiggen(!embiggen());
+              break;
             }
-            break;
-          }
 
-          case 'Escape': {
-            if (embiggen()) setEmbiggen(false);
-            else setSelectedVideo(null);
-            break;
-          }
+            case 'ArrowLeft':
+            case 'ArrowRight': {
+              const currentTime = this.currentTime();
+              if (typeof currentTime !== 'undefined') {
+                const skipTime = event.key === 'ArrowLeft' ? -5 : 5;
+                this.currentTime(Math.max(currentTime + skipTime, 0));
+              }
+              break;
+            }
+
+            case 'Escape': {
+              if (embiggen()) setEmbiggen(false);
+              else setSelectedVideo(null);
+              break;
+            }
           }
         },
       },
@@ -146,8 +142,10 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
 
     // initialize videojs, use loadmedia so we can specify metadta
     player = videojs(vidEl, videoJsOptions);
+
     // eslint-disable-next-line solid/reactivity
     player.on('ended', () => props.onEnded?.());
+
     // eslint-disable-next-line solid/reactivity
     player.on('timeupdate', () => {
       if (Number.isNaN(player.currentTime())) return;
@@ -166,9 +164,8 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
     const Button = videojs.getComponent('Button');
     const embiggenButton = new Button(player, {
       // @ts-expect-error // its fine, videojs types are broke
-      clickHandler: () => {
-        setEmbiggen(!embiggen());
-      }
+      clickHandler: () => setEmbiggen(!embiggen()),
+      controlText: 'Embiggen',
     });
     embiggenButton.addClass('embiggen-button');
     const cb = player.getChild('controlBar');
@@ -327,7 +324,7 @@ const App: Component = () => {
                   <Show when={videoStore.videos[props.item.identifier] !== undefined}>
                     <progress
                       value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
-                      max="100"/>
+                      max="100" />
                     <span class='reset' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
                   </Show>
                 </div>
