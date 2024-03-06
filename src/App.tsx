@@ -67,7 +67,9 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
       description: meta().metadata.description,
       poster: thumb ? `https://archive.org/download/${props.id}/${thumb.name}` : undefined,
       src: [{ src, type: 'video/mp4' }]
-    }, () => { });
+    }, () => {
+      player.focus();
+    });
   });
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
@@ -133,7 +135,8 @@ const VideoPlayer: Component<VideoPlayerProps> = props => {
           }
 
           case 'Escape': {
-            setSelectedVideo(null);
+            if (embiggen()) setEmbiggen(false);
+            else setSelectedVideo(null);
             break;
           }
           }
