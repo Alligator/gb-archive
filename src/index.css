@@ -4,14 +4,23 @@
   --pico-form-element-spacing-vertical: 0.5rem;
 }
 
-main {
+#root {
+  overflow: auto;
   height: 100vh;
+}
+
+main {
   display: flex;
   flex-direction: column;
 }
 
-main header {
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
+  background-color: var(--pico-background-color);
+  padding-top: var(--pico-spacing);
 
   input {
     margin: 0 var(--pico-form-element-spacing-horizontal);
@@ -26,45 +35,49 @@ dialog article {
   padding: 0;
 }
 
-.virtual-parent {
-  flex: 1;
-  overflow: auto;
-}
-
 .list-item {
   display: flex;
   width: 100%;
   border-bottom: var(--pico-border-width) solid var(--pico-table-border-color);
   background-color: var(--pico-background-color);
   align-items: center;
-}
 
-.list-item.odd {
-  background-color: var(--pico-table-row-stripped-background-color);
-}
+  &.odd {
+    background-color: var(--pico-table-row-stripped-background-color);
+  }
 
-.list-item .date {
-  margin-left: 0.5em;
-  width: 10%;
-}
+  &.seen {
+    color: var(--pico-muted-color);
+  }
 
-.list-item .subject {
-  width: 20%;
-  text-align: right;
-  margin-right: 0.5em;
-}
+  .date {
+    width: 10%;
+    margin-left: 0.5em;
+  }
 
-.list-item .title {
-  width: 70%;
-}
+  .subject {
+    width: 20%;
+    text-align: right;
+    margin-right: 0.5em;
+  }
 
-.list-item .title .line {
-  display: flex;
-  align-items: center;
-}
+  .title {
+    width: 70%;
 
-.list-item progress:hover + .reset {
-  opacity: 1;
+    .line {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  progress:hover + .reset {
+    opacity: 1;
+  }
+
+  progress {
+    margin: 0 0 0 1em;
+    width: 10%;
+  }
 }
 
 @keyframes heartbeat {
@@ -75,7 +88,7 @@ dialog article {
   60% { transform: scale(1.0); }
 }
 
-.list-item .title .reset {
+.reset-button {
   opacity: 0;
   position: relative;
   cursor: pointer;
@@ -108,15 +121,6 @@ dialog article {
   &:after {
     transform: rotate(-45deg);
   }
-}
-
-.list-item progress {
-  margin: 0 0 0 1em;
-  width: 10%;
-}
-
-.list-item.seen {
-  color: var(--pico-muted-color);
 }
 
 .video-js button.embiggen-button {

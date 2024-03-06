@@ -189,8 +189,6 @@ const App: Component = () => {
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
 
-  let scrollTargetElement!: HTMLDivElement;
-
   onMount(async () => {
     const resp = await fetch('archive-org.json');
     const json = await resp.json() as VideoJson[];
@@ -300,44 +298,42 @@ const App: Component = () => {
           </select>
         </Show>
       </header>
-      <div class="virtual-parent" ref={scrollTargetElement}>
-        <VirtualContainer
-          items={filteredVideos()}
-          scrollTarget={scrollTargetElement}
-          itemSize={{ height: 60 }}
-        >
-          {props =>
-            <div
-              classList={{
-                'list-item': true,
-                'seen': videoStore.videos[props.item.identifier] !== undefined,
-                'odd': props.index % 2 === 0
-              }}
-              style={props.style}
-            >
-              <div class='date'>
-                {props.item.date.toLocaleDateString()}
+      <VirtualContainer
+        items={filteredVideos()}
+        scrollTarget={document.querySelector('#root')! as HTMLElement}
+        itemSize={{ height: 60 }}
+      >
+        {props =>
+          <div
+            classList={{
+              'list-item': true,
+              'seen': videoStore.videos[props.item.identifier] !== undefined,
+              'odd': props.index % 2 === 0
+            }}
+            style={props.style}
+          >
+            <div class='date'>
+              {props.item.date.toLocaleDateString()}
+            </div>
+            <div class='title'>
+              <div class='line'>
+                <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
+                <Show when={videoStore.videos[props.item.identifier] !== undefined}>
+                  <progress
+                    value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
+                    max="100" />
+                  <span class='reset-button' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
+                </Show>
               </div>
-              <div class='title'>
-                <div class='line'>
-                  <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
-                  <Show when={videoStore.videos[props.item.identifier] !== undefined}>
-                    <progress
-                      value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
-                      max="100" />
-                    <span class='reset' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
-                  </Show>
-                </div>
-                <div class={styles.desc}>
-                  <small>{props.item.description}</small>
-                </div>
+              <div class={styles.desc}>
+                <small>{props.item.description}</small>
               </div>
-              <div class='subject'>
-                {props.item.subject}
-              </div>
-            </div>}
-        </VirtualContainer>
-      </div>
+            </div>
+            <div class='subject'>
+              {props.item.subject}
+            </div>
+          </div>}
+      </VirtualContainer>
       <Show when={selectedVideo()}>{vid =>
         <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier]?.[0] ?? undefined} onTimeUpdate={onTimeUpdate} onEnded={onEnded} />
       }</Show>
