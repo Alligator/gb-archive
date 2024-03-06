@@ -1,16 +1,13 @@
-import { onMount, type Component, createSignal, For, Show, onCleanup, createResource, createEffect } from 'solid-js';
+import { onMount, type Component, createSignal, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 
 import { VirtualContainer } from '@minht11/solid-virtual-container';
 
-import videojs from 'video.js';
-import Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
 import { createFilterStore, createVideoStore } from './stores';
 import { produce } from 'solid-js/store';
-
-const [selectedVideo, setSelectedVideo] = createSignal<Video | null>(null);
+import { VideoPlayer } from './VideoPlayer';
 
 interface Video {
   date: Date
@@ -28,162 +25,8 @@ interface VideoJson {
   description: string
 }
 
-interface VideoPlayerProps {
-  id: string
-  initialTime?: number
-  onTimeUpdate: (id: string, time: number, duration: number) => void
-  onEnded?: () => void
-}
-
-const fetchMeta = async (id: string) => {
-  const resp = await fetch(`https://archive.org/metadata/${id}`);
-  return resp.json();
-};
-
-const VideoPlayer: Component<VideoPlayerProps> = props => {
-  const [embiggen, setEmbiggen] = createSignal(false);
-  const [videoId, setVideoId] = createSignal('');
-
-  const [meta] = createResource(videoId, fetchMeta);
-
-  let vidEl: HTMLVideoElement;
-  let player: Player;
-
-  // we need a signal to pass into createResource so do this seemingly unnecessary thing here
-  createEffect(() => {
-    setVideoId(props.id);
-  });
-
-  // video id updated, load it into the player
-  createEffect(() => {
-    if (!meta()) return;
-
-    const video = meta().files.find((item: { format: string; }) => item.format === 'MPEG4');
-    const thumb = meta().files.find((item: { format: string; }) => item.format === 'Thumbnail');
-    const src = `https://archive.org/download/${props.id}/${video.name}`;
-
-    player.loadMedia({
-      title: `(${meta().metadata.date}) ${meta().metadata.title}`,
-      description: meta().metadata.description,
-      poster: thumb ? `https://archive.org/download/${props.id}/${thumb.name}` : undefined,
-      src: [{ src, type: 'video/mp4' }]
-    }, () => {
-      player.focus();
-    });
-  });
-
-  const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
-    if (evt.target === evt.currentTarget) {
-      setSelectedVideo(null);
-    }
-  };
-
-  onMount(() => {
-    // initialize the video player
-    const videoJsOptions = {
-      autoplay: true, // 'any' doesn't work, muted videos when autoplay next
-      controls: true,
-      controlBar: {
-        skipButtons: {
-          backward: 5,
-          forward: 5,
-        }
-      },
-      userActions: {
-        hotkeys: function (this: Player, event: KeyboardEvent) {
-          switch (event.key) {
-            case ' ': {
-              if (this.paused()) {
-                this.play();
-              } else {
-                this.pause();
-              }
-              break;
-            }
-
-            case 'm': {
-              this.muted(!this.muted());
-              break;
-            }
-
-            case 'f': {
-              if (this.isFullscreen()) {
-                this.exitFullscreen();
-              } else {
-                this.requestFullscreen();
-              }
-              break;
-            }
-
-            case 'e': {
-              setEmbiggen(!embiggen());
-              break;
-            }
-
-            case 'ArrowLeft':
-            case 'ArrowRight': {
-              const currentTime = this.currentTime();
-              if (typeof currentTime !== 'undefined') {
-                const skipTime = event.key === 'ArrowLeft' ? -5 : 5;
-                this.currentTime(Math.max(currentTime + skipTime, 0));
-              }
-              break;
-            }
-
-            case 'Escape': {
-              if (embiggen()) setEmbiggen(false);
-              else setSelectedVideo(null);
-              break;
-            }
-          }
-        },
-      },
-    };
-
-    // initialize videojs, use loadmedia so we can specify metadta
-    player = videojs(vidEl, videoJsOptions);
-
-    // eslint-disable-next-line solid/reactivity
-    player.on('ended', () => props.onEnded?.());
-
-    // eslint-disable-next-line solid/reactivity
-    player.on('timeupdate', () => {
-      if (Number.isNaN(player.currentTime())) return;
-      if (Number.isNaN(player.duration())) return;
-      props.onTimeUpdate(videoId(), player.currentTime()!, player.duration()!);
-    });
-
-    // set current playback progress for the video if it exists
-    player.on('loadedmetadata', () => {
-      if (props.initialTime && player.duration()! - props.initialTime > 30) {
-        player.currentTime(props.initialTime);
-      }
-    });
-
-    // add the embiggen button to the player
-    const Button = videojs.getComponent('Button');
-    const embiggenButton = new Button(player, {
-      // @ts-expect-error // its fine, videojs types are broke
-      clickHandler: () => setEmbiggen(!embiggen()),
-      controlText: 'Embiggen',
-    });
-    embiggenButton.addClass('embiggen-button');
-    const cb = player.getChild('controlBar');
-    cb?.addChild(embiggenButton, {}, cb.children_.length - 1);
-  });
-
-  onCleanup(() => {
-    player.dispose();
-  });
-
-  return <dialog open onClick={onDialogClick} class={embiggen() ? styles['dialog-embiggen'] : ''} >
-    <article>
-      <video class="video-js vjs-fill" ref={vidEl!} />
-    </article>
-  </dialog>;
-};
-
 const App: Component = () => {
+  const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
   const [videos, setVideos] = createSignal<Video[]>([]);
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
@@ -219,10 +62,10 @@ const App: Component = () => {
   };
 
   const selectVideo = (video: Video) => {
-    if (selectedVideo()?.identifier === video.identifier) {
+    if (selectedVideo() === video.identifier) {
       setSelectedVideo(null);
     } else {
-      setSelectedVideo(video);
+      setSelectedVideo(video.identifier);
     }
   };
 
@@ -265,10 +108,10 @@ const App: Component = () => {
 
   const onEnded = () => {
     const vids = filteredVideos();
-    const idx = vids.findIndex(vid => vid.identifier === selectedVideo()?.identifier);
+    const idx = vids.findIndex(vid => vid.identifier === selectedVideo());
     const nextVid = vids[idx + 1];
     if (!nextVid) return;
-    setSelectedVideo(nextVid);
+    setSelectedVideo(nextVid.identifier);
   };
 
   const clearProgress = (id: string) => {
@@ -335,7 +178,13 @@ const App: Component = () => {
           </div>}
       </VirtualContainer>
       <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer id={vid().identifier} initialTime={videoStore.videos[vid().identifier]?.[0] ?? undefined} onTimeUpdate={onTimeUpdate} onEnded={onEnded} />
+        <VideoPlayer
+          id={vid()}
+          initialTime={videoStore.videos[vid()]?.[0] ?? undefined}
+          onTimeUpdate={onTimeUpdate}
+          onEnded={onEnded}
+          onRequestChangeVideo={id => setSelectedVideo(id)}
+        />
       }</Show>
     </main>
   );
