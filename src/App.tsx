@@ -38,7 +38,6 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
     const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
     json = await resp.json();
     json = json.response.docs;
-    localStorage.setItem('lastRequestTime', new Date().getTime().toString());
   }
 
   // spruce up the response a bit
@@ -48,7 +47,14 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
     subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
   }));
 
-  if (!isCached) localStorage.setItem('videoResp', JSON.stringify(videos));
+  try {
+    if (!isCached) {
+      localStorage.setItem('videoResp', JSON.stringify(videos));
+      localStorage.setItem('lastRequestTime', new Date().getTime().toString());
+    }
+  } catch (e) {
+    console.warn('Error while caching response', e);
+  }
 
   return videos;
 };
