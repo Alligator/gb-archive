@@ -71,21 +71,37 @@ const App: Component = () => {
     setShows(shows);
   });
 
-
-  const filterByShow: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
-    setFilterState({ show: evt.currentTarget.value });
+  // sort dropdown changed
+  const onSortChange: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
+    setFilterState({ sort: evt.currentTarget.value });
   };
 
+  // video name filter input
   const search: JSX.EventHandler<HTMLInputElement, InputEvent> = (evt) => {
     setFilterState({ title: evt.currentTarget.value });
   };
 
+  // show dropdown changed
+  const filterByShow: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
+    setFilterState({ show: evt.currentTarget.value });
+  };
+
+  // video clicked handler
   const selectVideo = (video: Video) => {
     if (selectedVideo() === video.identifier) {
       setSelectedVideo(null);
     } else {
       setSelectedVideo(video.identifier);
     }
+  };
+
+  // progress bar delete clicked
+  const clearProgress = (id: string) => {
+    setVideoStore(
+      produce((s) => {
+        s.videos[id] = undefined!;
+      }),
+    );
   };
 
   const filteredVideos = () => {
@@ -113,9 +129,7 @@ const App: Component = () => {
     return filteredVids;
   };
 
-  const onSortChange: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
-    setFilterState({ sort: evt.currentTarget.value });
-  };
+  // video player callbacks
 
   const onTimeUpdate = (id: string, time: number, duration: number) => {
     setVideoStore(
@@ -131,14 +145,6 @@ const App: Component = () => {
     const nextVid = vids[idx + 1];
     if (!nextVid) return;
     setSelectedVideo(nextVid.identifier);
-  };
-
-  const clearProgress = (id: string) => {
-    setVideoStore(
-      produce((s) => {
-        s.videos[id] = undefined!;
-      }),
-    );
   };
 
   return (
@@ -202,7 +208,7 @@ const App: Component = () => {
           initialTime={videoStore.videos[vid()]?.[0] ?? undefined}
           onTimeUpdate={onTimeUpdate}
           onEnded={onEnded}
-          onRequestChangeVideo={id => setSelectedVideo(id)}
+          onCloseRequested={() => setSelectedVideo(null)}
         />
       }</Show>
     </main>

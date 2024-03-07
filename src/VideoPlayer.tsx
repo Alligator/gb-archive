@@ -11,7 +11,7 @@ interface VideoPlayerProps {
   initialTime?: number
   onTimeUpdate: (id: string, time: number, duration: number) => void
   onEnded?: () => void
-  onRequestChangeVideo: (id: string | null) => void
+  onCloseRequested: () => void
 }
 
 const fetchMeta = async (id: string) => {
@@ -53,7 +53,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
 
   const onDialogClick: JSX.EventHandler<HTMLDialogElement, Event> = (evt) => {
     if (evt.target === evt.currentTarget) {
-      props.onRequestChangeVideo(null);
+      props.onCloseRequested();
     }
   };
 
@@ -111,7 +111,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
 
             case 'Escape': {
               if (embiggen()) setEmbiggen(false);
-              else props.onRequestChangeVideo(null);
+              else props.onCloseRequested();
               break;
             }
           }
