@@ -1,4 +1,4 @@
-import { onMount, type Component, createSignal, For, Show } from 'solid-js';
+import { type Component, createSignal, For, Show, createResource } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 
@@ -27,22 +27,36 @@ interface VideoJson {
 
 const App: Component = () => {
   const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
-  const [videos, setVideos] = createSignal<Video[]>([]);
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
 
-  onMount(async () => {
-    const resp = await fetch('archive-org.json');
-    const json = await resp.json() as VideoJson[];
-    const videos: Video[] = json.map((v) => ({
+  const fetchVideos = async () => {
+    const cached = localStorage.getItem('videoResp');
+    const lastTime = parseInt(localStorage.getItem('lastRequestTime') ?? '0');
+
+    // grab json from either cache or online
+    let json;
+    const isCached = cached && (new Date().getTime()) - lastTime < 48 * 60 * 60 * 1000; // 48 hour cache
+    if (isCached) {
+      json = JSON.parse(cached);
+    } else {
+      const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
+      json = await resp.json();
+      json = json.response.docs;
+      localStorage.setItem('lastRequestTime', new Date().getTime().toString());
+    }
+
+    // spruce up the response a bit
+    const videos: Video[] = json.map((v:VideoJson) => ({
       ...v,
       date: new Date(v.date),
       subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
     }));
 
-    setVideos(videos);
+    if (!isCached) localStorage.setItem('videoResp', JSON.stringify(videos));
 
+    // update list of shows based on vid subjects
     const showsSet = new Set<string>();
     for (const v of videos) {
       showsSet.add(v.subject);
@@ -51,7 +65,10 @@ const App: Component = () => {
     shows.sort();
     setShows(shows);
 
-  });
+    return videos;
+  };
+
+  const [videos, /*{ mutate, refetch }*/] = createResource<Video[]>(fetchVideos);
 
   const filterByShow: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
     setFilterState({ show: evt.currentTarget.value });
@@ -71,6 +88,7 @@ const App: Component = () => {
 
   const filteredVideos = () => {
     let filteredVids = videos();
+    if (!filteredVids) return [];
 
     if (filterState.show === 'watched-videos') {
       filteredVids = filteredVids.filter(v => v.identifier in videoStore.videos);
