@@ -84,13 +84,13 @@ const App: Component = () => {
     }
 
     if (filterState.sort === 'newest-first') {
-      filteredVids.sort((a, b) => b.date.getTime() - a.date.getTime());
+      filteredVids = [...filteredVids].sort((a, b) => b.date.getTime() - a.date.getTime());
     } else if (filterState.sort === 'oldest-first') {
-      filteredVids.sort((a, b) => a.date.getTime() - b.date.getTime());
+      filteredVids = [...filteredVids].sort((a, b) => a.date.getTime() - b.date.getTime());
     } else if (filterState.sort === 'video-title') {
-      filteredVids.sort((a, b) => a.title.localeCompare(b.title));
-
+      filteredVids = [...filteredVids].sort((a, b) => a.title.localeCompare(b.title));
     }
+    
     return filteredVids;
   };
 
