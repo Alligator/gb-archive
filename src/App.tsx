@@ -8,6 +8,7 @@ import 'video.js/dist/video-js.css';
 import { createFilterStore, createVideoStore } from './stores';
 import { produce } from 'solid-js/store';
 import { VideoPlayer } from './VideoPlayer';
+import { compress, decompress } from './compression';
 
 interface Video {
   date: Date
@@ -33,7 +34,12 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
   let json;
   const isCached = !refetching && cached && (new Date().getTime()) - lastTime < 48 * 60 * 60 * 1000; // 48 hour cache
   if (isCached) {
-    json = JSON.parse(cached);
+    if (cached[0] === '[') {
+      // probably uncompressed json
+      json = JSON.parse(cached);
+    } else {
+      json = JSON.parse(await decompress(cached));
+    }
   } else {
     const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
     json = await resp.json();
@@ -49,7 +55,7 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
 
   try {
     if (!isCached) {
-      localStorage.setItem('videoResp', JSON.stringify(videos));
+      localStorage.setItem('videoResp', await compress(JSON.stringify(videos)));
       localStorage.setItem('lastRequestTime', new Date().getTime().toString());
     }
   } catch (e) {
