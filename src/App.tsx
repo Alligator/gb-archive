@@ -1,4 +1,4 @@
-import { type Component, createSignal, For, Show, createResource } from 'solid-js';
+import { type Component, createSignal, For, Show, createResource, createEffect } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 
@@ -31,7 +31,7 @@ const App: Component = () => {
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
 
-  const fetchVideos = async () => {
+  const fetchVideos = async (/* source, { value, refetching } */) => {
     const cached = localStorage.getItem('videoResp');
     const lastTime = parseInt(localStorage.getItem('lastRequestTime') ?? '0');
 
@@ -48,7 +48,7 @@ const App: Component = () => {
     }
 
     // spruce up the response a bit
-    const videos: Video[] = json.map((v:VideoJson) => ({
+    const videos: Video[] = json.map((v: VideoJson) => ({
       ...v,
       date: new Date(v.date),
       subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
@@ -56,19 +56,21 @@ const App: Component = () => {
 
     if (!isCached) localStorage.setItem('videoResp', JSON.stringify(videos));
 
-    // update list of shows based on vid subjects
+    return videos;
+  };
+  const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
+
+  // update list of shows based on video subjects
+  createEffect(() => {
     const showsSet = new Set<string>();
-    for (const v of videos) {
+    for (const v of videos()) {
       showsSet.add(v.subject);
     }
     const shows = [...showsSet];
     shows.sort();
     setShows(shows);
+  });
 
-    return videos;
-  };
-
-  const [videos, /*{ mutate, refetch }*/] = createResource<Video[]>(fetchVideos);
 
   const filterByShow: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
     setFilterState({ show: evt.currentTarget.value });
@@ -88,7 +90,6 @@ const App: Component = () => {
 
   const filteredVideos = () => {
     let filteredVids = videos();
-    if (!filteredVids) return [];
 
     if (filterState.show === 'watched-videos') {
       filteredVids = filteredVids.filter(v => v.identifier in videoStore.videos);
@@ -108,7 +109,7 @@ const App: Component = () => {
     } else if (filterState.sort === 'video-title') {
       filteredVids = [...filteredVids].sort((a, b) => a.title.localeCompare(b.title));
     }
-    
+
     return filteredVids;
   };
 
