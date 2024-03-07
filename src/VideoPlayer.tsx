@@ -48,6 +48,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       src: [{ src, type: 'video/mp4' }]
     }, () => {
       player.focus();
+      player.play();
     });
   });
 
@@ -62,6 +63,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     const videoJsOptions = {
       autoplay: true, // 'any' doesn't work, muted videos when autoplay next
       controls: true,
+      bigPlayButton: false,
       controlBar: {
         skipButtons: {
           backward: 5,
@@ -162,6 +164,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
         const lastTime = player.currentTime();
         player.load();
         player.currentTime(lastTime);
+        player.play();
       },
       controlText: 'Reload video',
     });
