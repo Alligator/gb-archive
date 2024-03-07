@@ -1,5 +1,5 @@
 import { type Component, createSignal, For, Show, createResource, createEffect } from 'solid-js';
-import type { JSX } from 'solid-js';
+import type { JSX, ResourceFetcher } from 'solid-js';
 import styles from './App.module.css';
 
 import { VirtualContainer } from '@minht11/solid-virtual-container';
@@ -25,39 +25,39 @@ interface VideoJson {
   description: string
 }
 
+const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /* value, */ refetching }) => {
+  const cached = localStorage.getItem('videoResp');
+  const lastTime = parseInt(localStorage.getItem('lastRequestTime') ?? '0');
+
+  // grab json from either cache or online
+  let json;
+  const isCached = !refetching && cached && (new Date().getTime()) - lastTime < 48 * 60 * 60 * 1000; // 48 hour cache
+  if (isCached) {
+    json = JSON.parse(cached);
+  } else {
+    const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
+    json = await resp.json();
+    json = json.response.docs;
+    localStorage.setItem('lastRequestTime', new Date().getTime().toString());
+  }
+
+  // spruce up the response a bit
+  const videos: Video[] = json.map((v: VideoJson) => ({
+    ...v,
+    date: new Date(v.date),
+    subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
+  }));
+
+  if (!isCached) localStorage.setItem('videoResp', JSON.stringify(videos));
+
+  return videos;
+};
+
 const App: Component = () => {
   const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
-
-  const fetchVideos = async (/* source, { value, refetching } */) => {
-    const cached = localStorage.getItem('videoResp');
-    const lastTime = parseInt(localStorage.getItem('lastRequestTime') ?? '0');
-
-    // grab json from either cache or online
-    let json;
-    const isCached = cached && (new Date().getTime()) - lastTime < 48 * 60 * 60 * 1000; // 48 hour cache
-    if (isCached) {
-      json = JSON.parse(cached);
-    } else {
-      const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
-      json = await resp.json();
-      json = json.response.docs;
-      localStorage.setItem('lastRequestTime', new Date().getTime().toString());
-    }
-
-    // spruce up the response a bit
-    const videos: Video[] = json.map((v: VideoJson) => ({
-      ...v,
-      date: new Date(v.date),
-      subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
-    }));
-
-    if (!isCached) localStorage.setItem('videoResp', JSON.stringify(videos));
-
-    return videos;
-  };
   const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
 
   // update list of shows based on video subjects
