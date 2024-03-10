@@ -1,6 +1,7 @@
 import { onMount, type Component, createSignal, onCleanup, createResource, createEffect } from 'solid-js';
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
+import { debounce } from '@solid-primitives/scheduled';
 
 import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
@@ -30,6 +31,14 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
 
   let vidEl: HTMLVideoElement;
   let player: Player;
+
+  function reloadPlayer() {
+    console.log('reloading player');
+    const lastTime = player.currentTime();
+    player.load();
+    player.currentTime(lastTime);
+    player.play();
+  }
 
   // we need a signal to pass into createResource so do this seemingly unnecessary thing here
   createEffect(() => {
@@ -149,8 +158,16 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       }
     });
 
-    player.on('stalled', () => {
-      console.log('stalled');
+    // if it looks like its never coming back, reload it
+    const keepAlive = debounce(reloadPlayer, 30000);
+    player.on('playing', () => {
+      console.log('video playing');
+      keepAlive.clear();
+    });
+
+    player.on('waiting', () => {
+      console.log('video waiting');
+      keepAlive();
     });
 
     // add the embiggen button to the player
@@ -168,12 +185,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     // add the buffer status button to the player
     const bufferStatusButton = new Button(player, {
       // @ts-expect-error // its fine, videojs types are broke
-      clickHandler: () => {
-        const lastTime = player.currentTime();
-        player.load();
-        player.currentTime(lastTime);
-        player.play();
-      },
+      clickHandler: reloadPlayer,
       controlText: 'Reload video',
     });
     bufferStatusButton.addClass('status-button');
