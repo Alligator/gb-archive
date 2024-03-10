@@ -1,4 +1,4 @@
-import { type Component, createSignal, For, Show, createResource, createEffect, createMemo } from 'solid-js';
+import { type Component, createSignal, For, Show, createResource, createEffect, createMemo, Suspense } from 'solid-js';
 import type { JSX, ResourceFetcher } from 'solid-js';
 import styles from './App.module.css';
 
@@ -118,13 +118,13 @@ const App: Component = () => {
 
   // reset filters back to default
   const resetFilters = (ev: Event) => {
-    setFilterState({ show: '', sort: 'newest-first', title: ''});
+    setFilterState({ show: '', sort: 'newest-first', title: '' });
     ev.preventDefault();
   };
 
   const filteredVideos = createMemo(() => {
 
-    const filteredVids = videos().filter(v => 
+    const filteredVids = videos().filter(v =>
       (filterState.show !== 'watched-videos' || v.identifier in videoStore.videos) &&
       (!filterState.show.length || filterState.show === 'watched-videos' || v.subject === filterState.show) &&
       (!filterState.title.length || v.title.toLowerCase().includes(filterState.title))
@@ -161,74 +161,76 @@ const App: Component = () => {
 
   return (
     <main class="container">
-      <header>
-        <select onChange={onSortChange} value={filterState.sort}>
-          <option value="newest-first">Show newest first</option>
-          <option value="oldest-first">Show oldest first</option>
-          <option value="video-title">Sort alphabetically</option>
-        </select>
-        <input type="search" onInput={search} placeholder='Video Title' value={filterState.title} />
-        <Show when={shows().length > 0}>
-          <select onChange={filterByShow} value={filterState.show}>
-            <option value="">All Shows</option>
-            <option value="watched-videos">Watched Videos</option>
-            <For each={shows()}>{show =>
-              <option value={show}>{show}</option>
-            }</For>
+      <Suspense fallback={<div class='loading' aria-busy="true" />}>
+        <header>
+          <select onChange={onSortChange} value={filterState.sort}>
+            <option value="newest-first">Show newest first</option>
+            <option value="oldest-first">Show oldest first</option>
+            <option value="video-title">Sort alphabetically</option>
           </select>
-        </Show>
-      </header>
-      <p>
-        Showing {filteredVideos().length} videos 
-        <Show when={filterState.show != '' || filterState.sort != 'newest-first' || filterState.title != ''}>
-          (<a href='' onClick={resetFilters}>Reset filters</a>)
-        </Show>
-      </p>
-      <VirtualContainer
-        items={filteredVideos()}
-        scrollTarget={document.querySelector('#root')! as HTMLElement}
-        itemSize={{ height: 60 }}
-      >
-        {props =>
-          <div
-            classList={{
-              'list-item': true,
-              'seen': videoStore.videos[props.item.identifier] !== undefined,
-              'odd': props.index % 2 === 0
-            }}
-            style={props.style}
-          >
-            <div class='date'>
-              {props.item.date.toLocaleDateString()}
-            </div>
-            <div class='title'>
-              <div class='line'>
-                <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
-                <Show when={videoStore.videos[props.item.identifier] !== undefined}>
-                  <progress
-                    value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
-                    max="100" />
-                  <span class='reset-button' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
-                </Show>
+          <input type="search" onInput={search} placeholder='Video Title' value={filterState.title} />
+          <Show when={shows().length > 0}>
+            <select onChange={filterByShow} value={filterState.show}>
+              <option value="">All Shows</option>
+              <option value="watched-videos">Watched Videos</option>
+              <For each={shows()}>{show =>
+                <option value={show}>{show}</option>
+              }</For>
+            </select>
+          </Show>
+        </header>
+        <p>
+          Showing {filteredVideos().length} / {videos().length} videos 
+          <Show when={filterState.show != '' || filterState.sort != 'newest-first' || filterState.title != ''}>
+            (<a href='' onClick={resetFilters}>Reset filters</a>)
+          </Show>
+        </p>
+        <VirtualContainer
+          items={filteredVideos()}
+          scrollTarget={document.querySelector('#root')! as HTMLElement}
+          itemSize={{ height: 60 }}
+        >
+          {props =>
+            <div
+              classList={{
+                'list-item': true,
+                'seen': videoStore.videos[props.item.identifier] !== undefined,
+                'odd': props.index % 2 === 0
+              }}
+              style={props.style}
+            >
+              <div class='date'>
+                {props.item.date.toLocaleDateString()}
               </div>
-              <div class={styles.desc}>
-                <small>{props.item.description}</small>
+              <div class='title'>
+                <div class='line'>
+                  <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
+                  <Show when={videoStore.videos[props.item.identifier] !== undefined}>
+                    <progress
+                      value={videoStore.videos[props.item.identifier][0] / videoStore.videos[props.item.identifier][1] * 100}
+                      max="100" />
+                    <span class='reset-button' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
+                  </Show>
+                </div>
+                <div class={styles.desc}>
+                  <small>{props.item.description}</small>
+                </div>
               </div>
-            </div>
-            <div class='subject'>
-              {props.item.subject}
-            </div>
-          </div>}
-      </VirtualContainer>
-      <Show when={selectedVideo()}>{vid =>
-        <VideoPlayer
-          id={vid()}
-          initialTime={videoStore.videos[vid()]?.[0] ?? undefined}
-          onTimeUpdate={onTimeUpdate}
-          onEnded={onEnded}
-          onCloseRequested={() => setSelectedVideo(null)}
-        />
-      }</Show>
+              <div class='subject'>
+                {props.item.subject}
+              </div>
+            </div>}
+        </VirtualContainer>
+        <Show when={selectedVideo()}>{vid =>
+          <VideoPlayer
+            id={vid()}
+            initialTime={videoStore.videos[vid()]?.[0] ?? undefined}
+            onTimeUpdate={onTimeUpdate}
+            onEnded={onEnded}
+            onCloseRequested={() => setSelectedVideo(null)}
+          />
+        }</Show>
+      </Suspense>
     </main>
   );
 };

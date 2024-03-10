@@ -14,6 +14,10 @@ main {
   flex-direction: column;
 }
 
+.loading {
+  margin-top: 20vh;
+}
+
 header {
   position: sticky;
   top: 0;
