@@ -70,7 +70,7 @@ dialog article {
     }
   }
 
-  progress:hover + .reset-button {
+  progress:hover+.reset-button {
     opacity: 1;
   }
 
@@ -81,11 +81,25 @@ dialog article {
 }
 
 @keyframes heartbeat {
-  0% { transform: scale(1.0); }
-  15% { transform: scale(1.5); }
-  30% { transform: scale(1.0); }
-  45% { transform: scale(1.5); }
-  60% { transform: scale(1.0); }
+  0% {
+    transform: scale(1.0);
+  }
+
+  15% {
+    transform: scale(1.5);
+  }
+
+  30% {
+    transform: scale(1.0);
+  }
+
+  45% {
+    transform: scale(1.5);
+  }
+
+  60% {
+    transform: scale(1.0);
+  }
 }
 
 .reset-button {
@@ -104,7 +118,8 @@ dialog article {
     animation-iteration-count: infinite;
   }
 
-  &:before, &:after {
+  &:before,
+  &:after {
     position: absolute;
     content: ' ';
     height: 2px;
@@ -117,22 +132,45 @@ dialog article {
   &:before {
     transform: rotate(45deg);
   }
-  
+
   &:after {
     transform: rotate(-45deg);
   }
 }
 
-.video-js button.embiggen-button {
-  background-image: url(assets/andre_down.png);
-  background-position: top;
-  background-repeat: no-repeat;
-}
+.video-js {
+  button.embiggen-button {
+    background-image: url(assets/andre_down.png);
+    background-position: top;
+    background-repeat: no-repeat;
+  }
 
-.video-js button.embiggen-button:hover {
-  background-image: url(assets/andre_up.png);
-}
+  button.embiggen-button:hover {
+    background-image: url(assets/andre_up.png);
+  }
 
-.video-js .hidden {
-  display: none;
+  .hidden {
+    display: none;
+  }
+
+  /* make mobile ui suck less */
+  @media (pointer: coarse) {
+    .vjs-control-bar {
+      font-size: 1rem;
+      background-color: transparent !important;
+      filter: drop-shadow(-2px -2px 1px #00000099) drop-shadow(-2px 2px 1px #00000099) drop-shadow(2px -2px 1px #00000099) drop-shadow(2px 2px 1px #00000099);
+      width: 95% !important;
+      margin: 0 2.5% 2.5% 2.5%;
+
+      .vjs-play-control,
+      .vjs-skip-backward-5,
+      .vjs-skip-forward-5,
+      .embiggen-button,
+      .vjs-mute-control,
+      .vjs-volume-control,
+      .vjs-volume-panel {
+        display: none;
+      }
+    }
+  }
 }

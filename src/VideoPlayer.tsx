@@ -6,6 +6,9 @@ import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
 
+import 'videojs-mobile-ui/dist/videojs-mobile-ui.css';
+import 'videojs-mobile-ui';
+
 interface VideoPlayerProps {
   id: string
   initialTime?: number
@@ -123,6 +126,11 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
 
     // initialize videojs, use loadmedia so we can specify metadta
     player = videojs(vidEl, videoJsOptions);
+
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      // @ts-expect-error // videojs plugin
+      player.mobileUi();
+    }
 
     // eslint-disable-next-line solid/reactivity
     player.on('ended', () => props.onEnded?.());

@@ -1,4 +1,4 @@
-import { type Component, createSignal, For, Show, createResource, createEffect } from 'solid-js';
+import { type Component, createSignal, For, Show, createResource, createEffect, createMemo } from 'solid-js';
 import type { JSX, ResourceFetcher } from 'solid-js';
 import styles from './App.module.css';
 
@@ -116,7 +116,13 @@ const App: Component = () => {
     );
   };
 
-  const filteredVideos = () => {
+  // reset filters back to default
+  const resetFilters = (ev: Event) => {
+    setFilterState({ show: '', sort: 'newest-first', title: ''});
+    ev.preventDefault();
+  };
+
+  const filteredVideos = createMemo(() => {
     let filteredVids = videos();
 
     if (filterState.show === 'watched-videos') {
@@ -139,7 +145,7 @@ const App: Component = () => {
     }
 
     return filteredVids;
-  };
+  });
 
   // video player callbacks
 
@@ -178,6 +184,12 @@ const App: Component = () => {
           </select>
         </Show>
       </header>
+      <p>
+        Showing {filteredVideos().length} videos 
+        <Show when={filterState.show != '' || filterState.sort != 'newest-first' || filterState.title != ''}>
+          (<a href='' onClick={resetFilters}>Reset filters</a>)
+        </Show>
+      </p>
       <VirtualContainer
         items={filteredVideos()}
         scrollTarget={document.querySelector('#root')! as HTMLElement}
