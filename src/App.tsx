@@ -123,25 +123,19 @@ const App: Component = () => {
   };
 
   const filteredVideos = createMemo(() => {
-    let filteredVids = videos();
 
-    if (filterState.show === 'watched-videos') {
-      filteredVids = filteredVids.filter(v => v.identifier in videoStore.videos);
-    }
-    else if (filterState.show !== '') {
-      filteredVids = filteredVids.filter(v => v.subject === filterState.show);
-    }
-
-    if (filterState.title !== '') {
-      filteredVids = filteredVids.filter(v => v.title.toLowerCase().includes(filterState.title));
-    }
+    const filteredVids = videos().filter(v => 
+      (filterState.show !== 'watched-videos' || v.identifier in videoStore.videos) &&
+      (!filterState.show.length || filterState.show === 'watched-videos' || v.subject === filterState.show) &&
+      (!filterState.title.length || v.title.toLowerCase().includes(filterState.title))
+    );
 
     if (filterState.sort === 'newest-first') {
-      filteredVids = [...filteredVids].sort((a, b) => b.date.getTime() - a.date.getTime());
+      filteredVids.sort((a, b) => b.date.getTime() - a.date.getTime());
     } else if (filterState.sort === 'oldest-first') {
-      filteredVids = [...filteredVids].sort((a, b) => a.date.getTime() - b.date.getTime());
+      filteredVids.sort((a, b) => a.date.getTime() - b.date.getTime());
     } else if (filterState.sort === 'video-title') {
-      filteredVids = [...filteredVids].sort((a, b) => a.title.localeCompare(b.title));
+      filteredVids.sort((a, b) => a.title.localeCompare(b.title));
     }
 
     return filteredVids;
