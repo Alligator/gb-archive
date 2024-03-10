@@ -78,6 +78,20 @@ dialog article {
     margin: 0 0 0 1em;
     width: 10%;
   }
+
+  @media (max-width: 800px) {
+    & .date {
+      display: none;
+    }
+
+    & .subject {
+      display: none;
+    }
+
+    & .title {
+      width: 100%;
+    }
+  }
 }
 
 @keyframes heartbeat {
