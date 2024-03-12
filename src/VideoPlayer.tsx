@@ -77,6 +77,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       controls: true,
       bigPlayButton: false,
       controlBar: {
+        pictureInPictureToggle: false,
         skipButtons: {
           backward: 5,
           forward: 5,
