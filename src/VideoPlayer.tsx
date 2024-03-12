@@ -171,6 +171,11 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       keepAlive();
     });
 
+    player.on('pause', () =>{
+      console.log('video pause');
+      keepAlive.clear();
+    });
+
     // add the embiggen button to the player
     const Button = videojs.getComponent('Button');
     const cb = player.getChild('controlBar');
