@@ -91,10 +91,6 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       bigPlayButton: false,
       controlBar: {
         pictureInPictureToggle: false,
-        skipButtons: {
-          backward: 5,
-          forward: 5,
-        }
       },
       userActions: {
         hotkeys: function (this: Player, event: KeyboardEvent) {
