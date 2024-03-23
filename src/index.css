@@ -167,6 +167,11 @@ dialog article {
     background-image: url(assets/andre_up.png);
   }
 
+  button.status-button {
+    width: 5em;
+    text-wrap: nowrap;
+  }
+
   .hidden {
     display: none;
   }

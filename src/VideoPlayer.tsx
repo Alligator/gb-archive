@@ -2,6 +2,8 @@ import { onMount, type Component, createSignal, onCleanup, createResource, creat
 import type { JSX } from 'solid-js';
 import styles from './App.module.css';
 import { debounce } from '@solid-primitives/scheduled';
+import createRAF, { targetFPS } from '@solid-primitives/raf';
+
 
 import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
@@ -26,7 +28,7 @@ const fetchMeta = async (id: string) => {
 export const VideoPlayer: Component<VideoPlayerProps> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
   const [videoId, setVideoId] = createSignal('');
-
+  const [videoStalled, setVideoStalled] = createSignal(false);
   const [meta] = createResource(videoId, fetchMeta);
 
   let vidEl: HTMLVideoElement;
@@ -43,6 +45,17 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
   // we need a signal to pass into createResource so do this seemingly unnecessary thing here
   createEffect(() => {
     setVideoId(props.id);
+  });
+
+  // can't track if a debounce is running so use a signal to setup keepalive
+  const keepAlive = debounce(reloadPlayer, 30000);
+  createEffect(() => {
+    console.log('videoStalled:', videoStalled());
+    if (videoStalled()) {
+      keepAlive();
+    } else {
+      keepAlive.clear();
+    }
   });
 
   // video id updated, load it into the player
@@ -160,21 +173,9 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     });
 
     // if it looks like its never coming back, reload it
-    const keepAlive = debounce(reloadPlayer, 30000);
-    player.on('playing', () => {
-      console.log('video playing');
-      keepAlive.clear();
-    });
-
-    player.on('waiting', () => {
-      console.log('video waiting');
-      keepAlive();
-    });
-
-    player.on('pause', () =>{
-      console.log('video pause');
-      keepAlive.clear();
-    });
+    player.on('waiting', () => setVideoStalled(true));
+    player.on('playing', () => setVideoStalled(false));
+    player.on('pause', () => setVideoStalled(false));
 
     // add the embiggen button to the player
     const Button = videojs.getComponent('Button');
@@ -196,10 +197,26 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     });
     bufferStatusButton.addClass('status-button');
     cb?.addChild(bufferStatusButton, {}, cb.children_.length - 3);
-    const updateBuffer = () => bufferStatusButton.el().innerHTML = (player.bufferedEnd() - (player.currentTime() ?? 0)).toFixed(1) + 's';
-    player.on('progress', updateBuffer);
-    player.on('timeupdate', updateBuffer);
 
+    // update buffer status widget text using RAF to be more consistent
+    const updateBuffer = () => {
+      let amt = 0;
+      const bufs = player.buffered();
+      const curr = player.currentTime() ?? 0;
+      for (let i = 0; i < bufs.length; i++) {
+        if (bufs.start(i) <= curr && curr <= bufs.end(i)) {
+          amt = bufs.end(i) - curr;
+          break;
+        }
+      }
+
+      bufferStatusButton.el().innerHTML =
+        amt.toFixed(1) + 's' +
+        (videoStalled() ? ' ⚠️' : '');
+    };
+
+    const [_running, start, _stop] = createRAF(targetFPS(updateBuffer, 4));
+    start();
   });
 
   onCleanup(() => {
