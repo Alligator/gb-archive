@@ -67,6 +67,8 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
 
 const App: Component = () => {
   const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
+  const [randomPlay, setRandomPlay] = createSignal(false);
+
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
@@ -122,6 +124,13 @@ const App: Component = () => {
     ev.preventDefault();
   };
 
+  // link clicked to start random video player
+  const playRandom = (ev: Event) => {
+    setRandomPlay(true);
+    onEnded();
+    ev.preventDefault();
+  };
+
   const filteredVideos = createMemo(() => {
 
     const filteredVids = videos().filter(v =>
@@ -153,10 +162,21 @@ const App: Component = () => {
 
   const onEnded = () => {
     const vids = filteredVideos();
-    const idx = vids.findIndex(vid => vid.identifier === selectedVideo());
-    const nextVid = vids[idx + 1];
-    if (!nextVid) return;
-    setSelectedVideo(nextVid.identifier);
+    if (randomPlay()) {
+      const nextVid = vids[Math.floor(Math.random()*vids.length)];
+      setSelectedVideo(nextVid.identifier);
+    } else {
+      const idx = vids.findIndex(vid => vid.identifier === selectedVideo());
+      const nextVid = vids[idx + 1];
+      if (!nextVid) return;
+      setSelectedVideo(nextVid.identifier);
+    }
+
+  };
+
+  const onCloseRequested = () => {
+    setRandomPlay(false);
+    setSelectedVideo(null);
   };
 
   return (
@@ -179,10 +199,14 @@ const App: Component = () => {
             </select>
           </Show>
         </header>
-        <p>
-          Showing {filteredVideos().length} / {videos().length} videos 
+        <p class="showing-videos">
+          Showing {filteredVideos().length} / {videos().length} videos
+          <Show when={filteredVideos().length}>
+            <a href='' onClick={playRandom}>Random</a>
+          </Show>
+
           <Show when={filterState.show != '' || filterState.sort != 'newest-first' || filterState.title != ''}>
-            (<a href='' onClick={resetFilters}>Reset filters</a>)
+            <a href='' onClick={resetFilters}>Reset filters</a>
           </Show>
         </p>
         <VirtualContainer
@@ -227,7 +251,7 @@ const App: Component = () => {
             initialTime={videoStore.videos[vid()]?.[0] ?? undefined}
             onTimeUpdate={onTimeUpdate}
             onEnded={onEnded}
-            onCloseRequested={() => setSelectedVideo(null)}
+            onCloseRequested={onCloseRequested}
           />
         }</Show>
       </Suspense>
