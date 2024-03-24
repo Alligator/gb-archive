@@ -163,7 +163,7 @@ const App: Component = () => {
   const onEnded = () => {
     const vids = filteredVideos();
     if (randomPlay()) {
-      const nextVid = vids[Math.floor(Math.random()*vids.length)];
+      const nextVid = vids[Math.floor(Math.random() * vids.length)];
       setSelectedVideo(nextVid.identifier);
     } else {
       const idx = vids.findIndex(vid => vid.identifier === selectedVideo());

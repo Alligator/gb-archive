@@ -28,7 +28,6 @@ const fetchMeta = async (id: string) => {
 export const VideoPlayer: Component<VideoPlayerProps> = props => {
   const [embiggen, setEmbiggen] = createSignal(false);
   const [videoId, setVideoId] = createSignal('');
-  const [videoStalled, setVideoStalled] = createSignal(false);
   const [meta] = createResource(videoId, fetchMeta);
 
   let vidEl: HTMLVideoElement;
@@ -45,17 +44,6 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
   // we need a signal to pass into createResource so do this seemingly unnecessary thing here
   createEffect(() => {
     setVideoId(props.id);
-  });
-
-  // can't track if a debounce is running so use a signal to setup keepalive
-  const keepAlive = debounce(reloadPlayer, 30000);
-  createEffect(() => {
-    console.log('videoStalled:', videoStalled());
-    if (videoStalled()) {
-      keepAlive();
-    } else {
-      keepAlive.clear();
-    }
   });
 
   // video id updated, load it into the player
@@ -169,9 +157,10 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     });
 
     // if it looks like its never coming back, reload it
-    player.on('waiting', () => setVideoStalled(true));
-    player.on('playing', () => setVideoStalled(false));
-    player.on('pause', () => setVideoStalled(false));
+    const keepAlive = debounce(reloadPlayer, 30000);
+    player.on('timeupdate', () => keepAlive());
+    player.on('play', () => keepAlive());
+    player.on('pause', () => keepAlive.clear());
 
     // add the embiggen button to the player
     const Button = videojs.getComponent('Button');
@@ -207,8 +196,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
       }
 
       bufferStatusButton.el().innerHTML =
-        amt.toFixed(1) + 's' +
-        (videoStalled() ? ' ⚠️' : '');
+        amt.toFixed(1) + 's';
     };
 
     const [_running, start, _stop] = createRAF(targetFPS(updateBuffer, 4));
