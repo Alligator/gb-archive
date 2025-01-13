@@ -50,7 +50,7 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
   const videos: Video[] = json.map((v: VideoJson) => ({
     ...v,
     date: new Date(v.date),
-    subject: Array.isArray(v.subject) ? v.subject[1] : v.subject,
+    subject: Array.isArray(v.subject) ? v.subject.filter(s => s != 'Giant Bomb')[0] ?? 'Giant Bomb' : v.subject,
   }));
 
   try {
