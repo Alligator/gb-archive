@@ -5,7 +5,7 @@ import styles from './App.module.css';
 import { VirtualContainer } from '@minht11/solid-virtual-container';
 
 import 'video.js/dist/video-js.css';
-import { createFilterStore, createVideoStore } from './stores';
+import { createFilterStore, createVideoStore, InitialState } from './stores';
 import { produce } from 'solid-js/store';
 import { VideoPlayer } from './VideoPlayer';
 import { compress, decompress } from './compression';
@@ -73,6 +73,7 @@ const App: Component = () => {
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
   const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
+  const [showDateFilters, setShowDateFIlters] = createSignal(false);
 
   // update list of shows based on video subjects
   createEffect(() => {
@@ -120,7 +121,7 @@ const App: Component = () => {
 
   // reset filters back to default
   const resetFilters = (ev: Event) => {
-    setFilterState({ show: '', sort: 'newest-first', title: '' });
+    setFilterState(Object.assign({}, InitialState));
     ev.preventDefault();
   };
 
@@ -132,10 +133,13 @@ const App: Component = () => {
   };
 
   const filteredVideos = createMemo(() => {
-
     const filteredVids = videos().filter(v =>
       (filterState.show !== 'watched-videos' || v.identifier in videoStore.videos) &&
       (!filterState.show.length || filterState.show === 'watched-videos' || v.subject === filterState.show) &&
+      (filterState.startDate == null || v.date.getTime() >= filterState.startDate.getTime()) &&
+      (filterState.endDate == null || v.date.getTime() < filterState.endDate.getTime()) &&
+      (filterState.eras.some(
+        era => era.enabled && v.date.getTime() >= era.startDate.getTime() && v.date.getTime() < era.endDate.getTime())) &&
       (!filterState.title.length || v.title.toLowerCase().includes(filterState.title))
     );
 
@@ -179,10 +183,25 @@ const App: Component = () => {
     setSelectedVideo(null);
   };
 
+  const areFiltersDefaulted = createMemo(() => {
+    return filterState.show != '' ||
+      filterState.sort != 'newest-first' ||
+      filterState.title != '' ||
+      filterState.startDate != null ||
+      filterState.endDate != null ||
+      filterState.eras.some(era => !era.enabled);
+  });
+
+  const getYearRange = (start: Date, end:Date) => {
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+    return `${startYear < 2008 ? '2008' : startYear}-${endYear > new Date().getFullYear() ? 'present' : endYear}`;
+  };
+
   return (
     <main class="container">
       <Suspense fallback={<div class='loading' aria-busy="true" />}>
-        <header>
+        <header class='filters'>
           <select onChange={onSortChange} value={filterState.sort}>
             <option value="newest-first">Show newest first</option>
             <option value="oldest-first">Show oldest first</option>
@@ -198,6 +217,7 @@ const App: Component = () => {
               }</For>
             </select>
           </Show>
+          <button class='outline secondary' title='Filter by date' onClick={[setShowDateFIlters, true]}>🗓️</button>
         </header>
         <p class="showing-videos">
           Showing {filteredVideos().length} / {videos().length} videos
@@ -205,7 +225,7 @@ const App: Component = () => {
             <a href='' onClick={playRandom}>Random</a>
           </Show>
 
-          <Show when={filterState.show != '' || filterState.sort != 'newest-first' || filterState.title != ''}>
+          <Show when={areFiltersDefaulted()}>
             <a href='' onClick={resetFilters}>Reset filters</a>
           </Show>
         </p>
@@ -254,6 +274,27 @@ const App: Component = () => {
             onCloseRequested={onCloseRequested}
           />
         }</Show>
+        <dialog class='date-filter' open={showDateFilters()}>
+          <article>
+            <header>
+              <p>
+                <strong>🗓️ Filter by date</strong>
+              </p>
+            </header>
+            <fieldset>
+              <legend>Show videos from:</legend>
+              <For each={filterState.eras}>{(era, i) =>
+                <label>
+                  <input type="checkbox" name="english" checked={era.enabled} onClick={() => setFilterState('eras', i(), 'enabled', !era.enabled)} />
+                  {era.name} <em>({getYearRange(era.startDate, era.endDate)})</em>
+                </label>
+              }</For>
+            </fieldset>
+            <footer>
+              <button onClick={[setShowDateFIlters, false]}>Close</button>
+            </footer>
+          </article>
+        </dialog>
       </Suspense>
     </main>
   );

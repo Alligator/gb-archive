@@ -18,7 +18,7 @@ main {
   margin-top: 20vh;
 }
 
-header {
+header.filters {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -29,6 +29,15 @@ header {
   input {
     margin: 0 var(--pico-form-element-spacing-horizontal);
   }
+
+  button {
+    margin-bottom: var(--pico-spacing);
+    margin-left: var(--pico-form-element-spacing-horizontal);
+  }
+}
+
+dialog.date-filter em {
+  opacity: 0.5;
 }
 
 p.showing-videos a {
@@ -36,7 +45,7 @@ p.showing-videos a {
   margin-left: 0.5em;
 }
 
-dialog article {
+dialog.video-player article {
   max-width: 75vw;
   height: 75vh;
   display: flex;

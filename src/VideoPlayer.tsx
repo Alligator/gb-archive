@@ -132,7 +132,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     };
 
     // initialize videojs, use loadmedia so we can specify metadta
-    player = videojs(vidEl, videoJsOptions);
+    player = videojs(vidEl!, videoJsOptions);
 
     if (window.matchMedia('(pointer: coarse)').matches) {
       // @ts-expect-error // videojs plugin
@@ -207,7 +207,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
     player.dispose();
   });
 
-  return <dialog open onClick={onDialogClick} class={embiggen() ? styles['dialog-embiggen'] : ''} >
+  return <dialog classList={{'video-player': true}} open onClick={onDialogClick} class={embiggen() ? styles['dialog-embiggen'] : ''} >
     <article>
       <video class="video-js vjs-fill" ref={vidEl!} />
     </article>
