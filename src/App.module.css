@@ -16,7 +16,8 @@
   width: 100vw;
   height: calc(100vh - 60px);
 }
-.dialog-embiggen > article {
+
+dialog.dialog-embiggen > article {
   width: 100vw;
   max-width: 100vw;
   height: 100vh;
@@ -24,7 +25,8 @@
   margin: 0;
   padding: 0;
 }
-.dialog-embiggen :global(.embiggen-hide) {
+
+dialog.dialog-embiggen :global(.embiggen-hide) {
   display: none;
 }
 
