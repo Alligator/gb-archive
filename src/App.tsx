@@ -49,7 +49,7 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
   // spruce up the response a bit
   const videos: Video[] = json.map((v: VideoJson) => ({
     ...v,
-    date: new Date(v.date),
+    date: new Date(v.date).getTime() - new Date(2008, 4, 28).getTime() >= 0 ? new Date(v.date) : new Date(2008, 4, 28),
     subject: Array.isArray(v.subject) ? v.subject.filter(s => s != 'Giant Bomb')[0] ?? 'Giant Bomb' : v.subject,
   }));
 
@@ -84,6 +84,23 @@ const App: Component = () => {
     const shows = [...showsSet];
     shows.sort();
     setShows(shows);
+  });
+
+  // update html elements of date filters
+  let startDateEl: HTMLInputElement;
+  let endDateEl: HTMLInputElement;
+  createEffect(() => {
+    startDateEl!.valueAsDate = filterState.startDate;
+    endDateEl!.valueAsDate = filterState.endDate;
+
+    startDateEl!.setAttribute('min', '2008-05-28');
+
+    const endMin = new Date(filterState.startDate ?? new Date());
+    endMin.setDate(endMin.getDate() + 1);
+    endDateEl!.setAttribute('min', endMin.toISOString().split('T')[0]);
+
+    startDateEl!.setAttribute('max', new Date().toISOString().split('T')[0]);
+    endDateEl!.setAttribute('max', new Date().toISOString().split('T')[0]);
   });
 
   // sort dropdown changed
@@ -192,7 +209,7 @@ const App: Component = () => {
       filterState.eras.some(era => !era.enabled);
   });
 
-  const getYearRange = (start: Date, end:Date) => {
+  const getYearRange = (start: Date, end: Date) => {
     const startYear = start.getFullYear();
     const endYear = end.getFullYear();
     return `${startYear < 2008 ? '2008' : startYear}-${endYear > new Date().getFullYear() ? 'present' : endYear}`;
@@ -289,6 +306,12 @@ const App: Component = () => {
                   {era.name} <em>({getYearRange(era.startDate, era.endDate)})</em>
                 </label>
               }</For>
+              <hr/>
+
+              <label for="start">Start date:</label>
+              <input type="date" ref={startDateEl!} onChange={ev => setFilterState('startDate', ev.target.valueAsDate)}/>
+              <label for="end">End date:</label>
+              <input type="date" ref={endDateEl!} onChange={ev => setFilterState('endDate', ev.target.valueAsDate)}/>
             </fieldset>
             <footer>
               <button onClick={[setShowDateFIlters, false]}>Close</button>
