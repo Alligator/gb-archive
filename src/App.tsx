@@ -95,7 +95,7 @@ const App: Component = () => {
 
     startDateEl!.setAttribute('min', '2008-05-28');
 
-    const endMin = new Date(filterState.startDate ?? new Date());
+    const endMin = new Date(filterState.startDate ?? new Date(2008, 5, 28));
     endMin.setDate(endMin.getDate() + 1);
     endDateEl!.setAttribute('min', endMin.toISOString().split('T')[0]);
 
