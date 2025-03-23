@@ -31,7 +31,7 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
   const lastTime = parseInt(localStorage.getItem('lastRequestTime') ?? '0');
 
   // grab json from either cache or online
-  let json;
+  let json: VideoJson[] = [];
   const isCached = !refetching && cached && (new Date().getTime()) - lastTime < 48 * 60 * 60 * 1000; // 48 hour cache
   if (isCached) {
     if (cached[0] === '[') {
@@ -41,9 +41,21 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
       json = JSON.parse(await decompress(cached));
     }
   } else {
-    const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=10000&output=json&save=yes');
-    json = await resp.json();
-    json = json.response.docs;
+    const params = new URLSearchParams({
+      q: 'collection:giant-bomb-archive',
+      fields: 'date,description,identifier,subject,title',
+      count: '10000',
+    });
+
+    do {
+      const resp = await fetch(`https://archive.org/services/search/v1/scrape?${params}`);
+      if (!resp.ok) break;
+
+      const j = await resp.json();
+      if (j.cursor) params.set('cursor', j.cursor);
+      else params.delete('cursor');
+      json.push(...j.items);
+    } while (params.has('cursor'));
   }
 
   // spruce up the response a bit
@@ -311,12 +323,12 @@ const App: Component = () => {
                   {era.name} <em>({getYearRange(era.startDate, era.endDate)})</em>
                 </label>
               }</For>
-              <hr/>
+              <hr />
 
               <label for="start">Start date:</label>
-              <input type="date" ref={startDateEl!} onChange={ev => setFilterState('startDate', ev.target.valueAsDate)}/>
+              <input type="date" ref={startDateEl!} onChange={ev => setFilterState('startDate', ev.target.valueAsDate)} />
               <label for="end">End date:</label>
-              <input type="date" ref={endDateEl!} onChange={ev => setFilterState('endDate', ev.target.valueAsDate)}/>
+              <input type="date" ref={endDateEl!} onChange={ev => setFilterState('endDate', ev.target.valueAsDate)} />
             </fieldset>
             <footer>
               <button onClick={[setShowDateFIlters, false]}>Close</button>
