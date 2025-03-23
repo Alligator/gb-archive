@@ -41,7 +41,7 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
       json = JSON.parse(await decompress(cached));
     }
   } else {
-    const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=20000&page=1&output=json&save=yes');
+    const resp = await fetch('https://archive.org/advancedsearch.php?q=collection%3A%22giant-bomb-archive%22&fl%5B%5D=date&fl%5B%5D=description&fl%5B%5D=identifier&fl%5B%5D=subject&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=10000&output=json&save=yes');
     json = await resp.json();
     json = json.response.docs;
   }
@@ -215,6 +215,11 @@ const App: Component = () => {
     return `${startYear < 2008 ? '2008' : startYear}-${endYear > new Date().getFullYear() ? 'present' : endYear}`;
   };
 
+  const clearVideoResp = () => {
+    localStorage.removeItem('videoResp');
+    document.location.reload();
+  };
+
   return (
     <main class="container">
       <Suspense fallback={<div class='loading' aria-busy="true" />}>
@@ -318,6 +323,7 @@ const App: Component = () => {
             </footer>
           </article>
         </dialog>
+        <a href='' onClick={clearVideoResp}>Reload Video List</a>
       </Suspense>
     </main>
   );
