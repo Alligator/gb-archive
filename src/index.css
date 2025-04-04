@@ -36,8 +36,19 @@ header.filters {
   }
 }
 
-dialog.date-filter em {
-  opacity: 0.5;
+dialog.settings {
+  fieldset {
+    padding-left: 1em;
+    padding-bottom: 1em;
+  }
+
+  hr {
+    margin: 0.5em 0
+  }
+  
+  em {
+    opacity: 0.5;
+  }
 }
 
 p.showing-videos a {

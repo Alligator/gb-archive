@@ -85,7 +85,13 @@ const App: Component = () => {
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
   const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
-  const [showDateFilters, setShowDateFIlters] = createSignal(false);
+  const [showSettings, setShowSettings] = createSignal(false);
+  const [autoplay, setAutoplay] = createSignal(localStorage.autoplay !== 'false');
+
+  // update autoplay pref in localstorage
+  createEffect(() => {
+    localStorage.setItem('autoplay', autoplay().toString());
+  });
 
   // update list of shows based on video subjects
   createEffect(() => {
@@ -195,6 +201,9 @@ const App: Component = () => {
 
   const onEnded = () => {
     const vids = filteredVideos();
+
+    if (!autoplay()) return;
+
     if (randomPlay()) {
       const nextVid = vids[Math.floor(Math.random() * vids.length)];
       setSelectedVideo(nextVid.identifier);
@@ -251,7 +260,7 @@ const App: Component = () => {
               }</For>
             </select>
           </Show>
-          <button class='outline secondary' title='Filter by date' onClick={[setShowDateFIlters, true]}>🗓️</button>
+          <button class='outline secondary' title='Show settings' onClick={[setShowSettings, true]}>⚙️</button>
         </header>
         <p class="showing-videos">
           Showing {filteredVideos().length} / {videos().length} videos
@@ -308,13 +317,25 @@ const App: Component = () => {
             onCloseRequested={onCloseRequested}
           />
         }</Show>
-        <dialog class='date-filter' open={showDateFilters()}>
+        <dialog class='settings' open={showSettings()}>
           <article>
             <header>
               <p>
-                <strong>🗓️ Filter by date</strong>
+                <strong>⚙️ Settings</strong>
               </p>
             </header>
+
+
+            <div class='section-title'>🎥 Video player</div>
+            <hr/>
+            <fieldset>
+              <input id="autoplay" type='checkbox' checked={autoplay()} onChange={e => setAutoplay(e.target.checked)}/>
+              <label for="autoplay">Autoplay next video</label>
+            </fieldset>
+
+
+            <div class='section-title'>🗓️ Filter by date</div>
+            <hr/>
             <fieldset>
               <legend>Show videos from:</legend>
               <For each={filterState.eras}>{(era, i) =>
@@ -331,7 +352,7 @@ const App: Component = () => {
               <input type="date" ref={endDateEl!} onChange={ev => setFilterState('endDate', ev.target.valueAsDate)} />
             </fieldset>
             <footer>
-              <button onClick={[setShowDateFIlters, false]}>Close</button>
+              <button onClick={[setShowSettings, false]}>Close</button>
             </footer>
           </article>
         </dialog>
