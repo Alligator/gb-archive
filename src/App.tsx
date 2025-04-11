@@ -79,18 +79,19 @@ const fetchVideos: ResourceFetcher<true, Video[], unknown> = async (_source, { /
 
 const App: Component = () => {
   const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
-  const [randomPlay, setRandomPlay] = createSignal(false);
+  const [randomPlay, setRandomPlay] = createSignal(localStorage.randomplay === 'true');
+  const [autoplay, setAutoplay] = createSignal(localStorage.autoplay !== 'false');
 
   const [shows, setShows] = createSignal<string[]>([]);
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
   const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
   const [showSettings, setShowSettings] = createSignal(false);
-  const [autoplay, setAutoplay] = createSignal(localStorage.autoplay !== 'false');
 
   // update autoplay pref in localstorage
   createEffect(() => {
     localStorage.setItem('autoplay', autoplay().toString());
+    localStorage.setItem('randomplay', randomPlay().toString());
   });
 
   // update list of shows based on video subjects
@@ -162,8 +163,10 @@ const App: Component = () => {
 
   // link clicked to start random video player
   const playRandom = (ev: Event) => {
-    setRandomPlay(true);
-    onEnded();
+    const vids = filteredVideos();
+
+    const nextVid = vids[Math.floor(Math.random() * vids.length)];
+    setSelectedVideo(nextVid.identifier);
     ev.preventDefault();
   };
 
@@ -217,7 +220,6 @@ const App: Component = () => {
   };
 
   const onCloseRequested = () => {
-    setRandomPlay(false);
     setSelectedVideo(null);
   };
 
@@ -264,9 +266,7 @@ const App: Component = () => {
         </header>
         <p class="showing-videos">
           Showing {filteredVideos().length} / {videos().length} videos
-          <Show when={filteredVideos().length}>
-            <a href='' onClick={playRandom}>Random</a>
-          </Show>
+          <a href='' onClick={playRandom}>Random</a>
 
           <Show when={areFiltersDefaulted()}>
             <a href='' onClick={resetFilters}>Reset filters</a>
@@ -329,8 +329,15 @@ const App: Component = () => {
             <div class='section-title'>🎥 Video player</div>
             <hr/>
             <fieldset>
-              <input id="autoplay" type='checkbox' checked={autoplay()} onChange={e => setAutoplay(e.target.checked)}/>
-              <label for="autoplay">Autoplay next video</label>
+              <label>
+                <input type='checkbox' checked={autoplay()} onChange={e => setAutoplay(e.target.checked)}/>
+                Autoplay next video
+              </label>
+              <label>
+                <input type='checkbox' checked={randomPlay()} onChange={e => setRandomPlay(e.target.checked)}/>
+                Randomize videos
+              </label>
+
             </fieldset>
 
 
