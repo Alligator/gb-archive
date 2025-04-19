@@ -209,7 +209,7 @@ const App: Component = () => {
   });
 
   const allVideosFavorited = createMemo(() => filteredVideos().every(vid => favorites.has(vid.identifier)));
-
+  const allVideosSameShow = createMemo(() => shows().includes(filterState.show));
 
   // video player callbacks
 
@@ -328,13 +328,13 @@ const App: Component = () => {
                     <span class='reset-button' onClick={() => clearProgress(props.item.identifier)} title='Reset progress' />
                   </Show>
                 </div>
-                <div class={styles.desc}>
-                  <small>{props.item.description}</small>
+                <small class={styles.desc}>{props.item.description}</small>
+              </div>
+              <Show when={!allVideosSameShow()}>
+                <div class='subject'>
+                  {props.item.subject}
                 </div>
-              </div>
-              <div class='subject'>
-                {props.item.subject}
-              </div>
+              </Show>
             </div>}
         </VirtualContainer>
         <Show when={selectedVideo()}>{vid =>
