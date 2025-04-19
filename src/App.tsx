@@ -392,6 +392,7 @@ const App: Component = () => {
             </footer>
           </article>
         </dialog>
+        <hr/>
         <a href='' onClick={clearVideoResp}>Reload Video List</a>
       </Suspense>
     </main>

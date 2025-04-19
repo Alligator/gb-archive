@@ -5,6 +5,8 @@
 .video {
   text-decoration: underline;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .embed {
@@ -31,10 +33,11 @@ dialog.dialog-embiggen :global(.embiggen-hide) {
 }
 
 .desc {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--pico-muted-color);
+  min-width: 0  ;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .logo {
