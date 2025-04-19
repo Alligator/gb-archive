@@ -25,6 +25,8 @@
     "vite-plugin-solid": "^2.8.2"
   },
   "dependencies": {
+    "@solid-primitives/set": "^0.6.0",
+    "font-awesome": "^4.7.0",
     "solid-js": "^1.8.11",
     "videojs-contextmenu-ui": "^7.0.0"
   }

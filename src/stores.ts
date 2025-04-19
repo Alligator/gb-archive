@@ -1,3 +1,4 @@
+import { ReactiveSet } from '@solid-primitives/set';
 import { createEffect } from 'solid-js';
 import { SetStoreFunction, createStore } from 'solid-js/store';
 
@@ -75,4 +76,21 @@ export function createVideoStore(): [VideoStore, SetStoreFunction<VideoStore>] {
   });
 
   return [store, setStore];
+}
+
+export function createFavoritesStore(): ReactiveSet<string> {
+  let initialState = [];
+
+  const favs = window.localStorage.getItem('favorites');
+  if (favs?.[0] == '[') {
+    initialState = JSON.parse(favs);
+  }
+
+  const store = new ReactiveSet<string>(initialState);
+
+  createEffect(() => {
+    window.localStorage.setItem('favorites', JSON.stringify(Array.from(store)));
+  });
+
+  return store;
 }

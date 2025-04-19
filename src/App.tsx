@@ -5,7 +5,7 @@ import styles from './App.module.css';
 import { VirtualContainer } from '@minht11/solid-virtual-container';
 
 import 'video.js/dist/video-js.css';
-import { createFilterStore, createVideoStore, InitialState } from './stores';
+import { createFavoritesStore, createFilterStore, createVideoStore, InitialState } from './stores';
 import { produce } from 'solid-js/store';
 import { VideoPlayer } from './VideoPlayer';
 import { compress, decompress } from './compression';
@@ -83,6 +83,7 @@ const App: Component = () => {
   const [autoplay, setAutoplay] = createSignal(localStorage.autoplay !== 'false');
 
   const [shows, setShows] = createSignal<string[]>([]);
+  const favorites = createFavoritesStore();
   const [filterState, setFilterState] = createFilterStore();
   const [videoStore, setVideoStore] = createVideoStore();
   const [videos, /*{ mutate, refetch }*/] = createResource(fetchVideos, { initialValue: [] });
@@ -161,6 +162,20 @@ const App: Component = () => {
     ev.preventDefault();
   };
 
+  const toggleAllFavorites = (ev: Event) => {
+    const allFav = allVideosFavorited();
+    for (const vid of filteredVideos()) {
+      if (allFav) {
+        favorites.delete(vid.identifier);
+      }
+      else {
+        favorites.add(vid.identifier);
+      }
+    }
+
+    ev.preventDefault();
+  };
+
   // link clicked to start random video player
   const playRandom = (ev: Event) => {
     const vids = filteredVideos();
@@ -172,8 +187,9 @@ const App: Component = () => {
 
   const filteredVideos = createMemo(() => {
     const filteredVids = videos().filter(v =>
+      (filterState.show !== 'favorite-videos' || favorites.has(v.identifier)) &&
       (filterState.show !== 'watched-videos' || v.identifier in videoStore.videos) &&
-      (!filterState.show.length || filterState.show === 'watched-videos' || v.subject === filterState.show) &&
+      (!filterState.show.length || filterState.show === 'watched-videos' || filterState.show === 'favorite-videos' || v.subject === filterState.show) &&
       (filterState.startDate == null || v.date.getTime() >= filterState.startDate.getTime()) &&
       (filterState.endDate == null || v.date.getTime() < filterState.endDate.getTime()) &&
       (filterState.eras.some(
@@ -191,6 +207,9 @@ const App: Component = () => {
 
     return filteredVids;
   });
+
+  const allVideosFavorited = createMemo(() => filteredVideos().every(vid => favorites.has(vid.identifier)));
+
 
   // video player callbacks
 
@@ -257,12 +276,15 @@ const App: Component = () => {
             <select onChange={filterByShow} value={filterState.show}>
               <option value="">All Shows</option>
               <option value="watched-videos">Watched Videos</option>
+              <option value="favorite-videos">Favorites</option>
               <For each={shows()}>{show =>
                 <option value={show}>{show}</option>
               }</For>
             </select>
           </Show>
-          <button class='outline secondary' title='Show settings' onClick={[setShowSettings, true]}>⚙️</button>
+          <button class='outline secondary' title='Show settings' onClick={[setShowSettings, true]}>
+            <i class="fa fa-cog" aria-hidden="true" />
+          </button>
         </header>
         <p class="showing-videos">
           Showing {filteredVideos().length} / {videos().length} videos
@@ -270,6 +292,9 @@ const App: Component = () => {
 
           <Show when={areFiltersDefaulted()}>
             <a href='' onClick={resetFilters}>Reset filters</a>
+            <Show when={filterState.show !== 'favorite-videos'}>
+              <a href='' onClick={toggleAllFavorites}>{allVideosFavorited() ? 'Unfavorite All' : 'Favorite All'}</a>
+            </Show>
           </Show>
         </p>
         <VirtualContainer
@@ -291,6 +316,10 @@ const App: Component = () => {
               </div>
               <div class='title'>
                 <div class='line'>
+                  <i
+                    onClick={() => favorites.has(props.item.identifier) ? favorites.delete(props.item.identifier) : favorites.add(props.item.identifier)}
+                    class={favorites.has(props.item.identifier) ? 'fa fa-star' : 'fa fa-star-o'} aria-hidden="true"
+                  />
                   <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
                   <Show when={videoStore.videos[props.item.identifier] !== undefined}>
                     <progress
@@ -321,28 +350,28 @@ const App: Component = () => {
           <article>
             <header>
               <p>
-                <strong>⚙️ Settings</strong>
+                <strong><i class="fa fa-cog" aria-hidden="true" /> Settings</strong>
               </p>
             </header>
 
 
-            <div class='section-title'>🎥 Video player</div>
-            <hr/>
+            <div class='section-title'><i class="fa fa-video-camera" aria-hidden="true" /> Video player</div>
+            <hr />
             <fieldset>
               <label>
-                <input type='checkbox' checked={autoplay()} onChange={e => setAutoplay(e.target.checked)}/>
+                <input type='checkbox' checked={autoplay()} onChange={e => setAutoplay(e.target.checked)} />
                 Autoplay next video
               </label>
               <label>
-                <input type='checkbox' checked={randomPlay()} onChange={e => setRandomPlay(e.target.checked)}/>
+                <input type='checkbox' checked={randomPlay()} onChange={e => setRandomPlay(e.target.checked)} />
                 Randomize videos
               </label>
 
             </fieldset>
 
 
-            <div class='section-title'>🗓️ Filter by date</div>
-            <hr/>
+            <div class='section-title'><i class="fa fa-calendar" aria-hidden="true" /> Filter by date</div>
+            <hr />
             <fieldset>
               <legend>Show videos from:</legend>
               <For each={filterState.eras}>{(era, i) =>

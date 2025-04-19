@@ -81,21 +81,30 @@ dialog.video-player article {
 
   .date {
     width: 10%;
-    margin-left: 0.5em;
+    max-width: 10%;
+    padding-left: 0.5em;
   }
 
   .subject {
     width: 20%;
+    max-width: 20%;
     text-align: right;
-    margin-right: 0.5em;
+    padding-right: 0.5em;
   }
 
   .title {
     width: 70%;
+    max-width: 70%;
 
     .line {
       display: flex;
       align-items: center;
+      text-wrap: nowrap;
+      overflow: hidden;
+
+      & > .fa {
+        margin-right: 0.5em;
+      }
     }
   }
 
