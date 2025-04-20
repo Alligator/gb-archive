@@ -9,6 +9,7 @@ import { createFavoritesStore, createFilterStore, createVideoStore, InitialState
 import { produce } from 'solid-js/store';
 import { VideoPlayer } from './VideoPlayer';
 import { compress, decompress } from './compression';
+import { initializeHistory, pauseHistory } from './history';
 
 interface Video {
   date: Date
@@ -122,6 +123,8 @@ const App: Component = () => {
     startDateEl!.setAttribute('max', new Date().toISOString().split('T')[0]);
     endDateEl!.setAttribute('max', new Date().toISOString().split('T')[0]);
   });
+
+  initializeHistory(filterState, setFilterState);
 
   // sort dropdown changed
   const onSortChange: JSX.EventHandler<HTMLSelectElement, Event> = (evt) => {
@@ -277,7 +280,7 @@ const App: Component = () => {
             <option value="oldest-first">Show oldest first</option>
             <option value="video-title">Sort alphabetically</option>
           </select>
-          <input type="search" onInput={search} placeholder='Video Title' value={filterState.title} />
+          <input type="search" onInput={search} onBlur={[pauseHistory, false]} onFocus={[pauseHistory, true]} placeholder='Video Title' value={filterState.title} />
           <Show when={shows().length > 0}>
             <select onChange={filterByShow} value={filterState.show}>
               <option value="">All Shows</option>

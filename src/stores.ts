@@ -2,7 +2,7 @@ import { ReactiveSet } from '@solid-primitives/set';
 import { createEffect } from 'solid-js';
 import { SetStoreFunction, createStore } from 'solid-js/store';
 
-interface FilterStore {
+export interface FilterStore {
   show: string;
   title: string;
   sort: string;
