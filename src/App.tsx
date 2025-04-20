@@ -320,6 +320,7 @@ const App: Component = () => {
                     onClick={() => favorites.has(props.item.identifier) ? favorites.delete(props.item.identifier) : favorites.add(props.item.identifier)}
                     class={favorites.has(props.item.identifier) ? 'fa fa-star' : 'fa fa-star-o'} aria-hidden="true"
                   />
+                  <span class='inline-date'>{props.item.date.toLocaleDateString()}</span>
                   <span class={styles.video} onClick={() => selectVideo(props.item)}>{props.item.title}</span>
                   <Show when={videoStore.videos[props.item.identifier] !== undefined}>
                     <progress

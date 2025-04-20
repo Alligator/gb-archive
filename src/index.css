@@ -45,7 +45,7 @@ dialog.settings {
   hr {
     margin: 0.5em 0
   }
-  
+
   em {
     opacity: 0.5;
   }
@@ -82,6 +82,18 @@ dialog.video-player article {
   .date {
     width: 6em;
     padding-left: 0.5em;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  .inline-date {
+    margin-right: 0.5em;
+
+    @media (min-width: 768px) {
+      display: none;
+    }
   }
 
   .subject {
@@ -91,6 +103,10 @@ dialog.video-player article {
     white-space: nowrap;
     text-align: right;
     padding: 0 0.5em;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
   }
 
   .title {
@@ -100,6 +116,10 @@ dialog.video-player article {
     display: flex;
     flex-direction: column;
 
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+
     .line {
       display: flex;
       align-items: center;
@@ -107,7 +127,7 @@ dialog.video-player article {
       overflow: hidden;
       min-width: 0;
 
-      & > .fa {
+      &>.fa {
         margin-right: 0.5em;
       }
     }
@@ -121,20 +141,6 @@ dialog.video-player article {
     margin: 0 0 0 1em;
     min-width: 3em;
     width: 10%;
-  }
-
-  @media (max-width: 800px) {
-    & .date {
-      display: none;
-    }
-
-    & .subject {
-      display: none;
-    }
-
-    & .title {
-      width: 100%;
-    }
   }
 }
 
