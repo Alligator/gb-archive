@@ -103,6 +103,7 @@ dialog.video-player article {
     white-space: nowrap;
     text-align: right;
     padding: 0 0.5em;
+    cursor: pointer;
 
     @media (max-width: 768px) {
       display: none;

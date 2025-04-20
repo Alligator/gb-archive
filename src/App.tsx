@@ -242,6 +242,8 @@ const App: Component = () => {
     setSelectedVideo(null);
   };
 
+  // ----
+
   const areFiltersDefaulted = createMemo(() => {
     return filterState.show != '' ||
       filterState.sort != 'newest-first' ||
@@ -260,6 +262,10 @@ const App: Component = () => {
   const clearVideoResp = () => {
     localStorage.removeItem('videoResp');
     document.location.reload();
+  };
+
+  const onShowClicked = (showName: string) => {
+    setFilterState('show', showName);
   };
 
   return (
@@ -332,7 +338,7 @@ const App: Component = () => {
                 <small class={styles.desc}>{props.item.description}</small>
               </div>
               <Show when={!allVideosSameShow()}>
-                <div class='subject'>
+                <div class='subject' onClick={[onShowClicked, props.item.subject]}>
                   {props.item.subject}
                 </div>
               </Show>
