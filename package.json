@@ -10,24 +10,25 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@minht11/solid-virtual-container": "^0.2.1",
-    "@solid-primitives/raf": "^2.1.16",
-    "@solid-primitives/scheduled": "^1.4.3",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-solid": "^0.13.1",
     "solid-devtools": "^0.34.0",
     "typescript": "^5.3.3",
-    "video.js": "^8.10.0",
-    "videojs-mobile-ui": "^1.1.1",
     "vite": "^6.2.5",
     "vite-plugin-solid": "^2.8.2"
   },
   "dependencies": {
+    "@minht11/solid-virtual-container": "^0.2.1",
+    "@solid-primitives/raf": "^2.1.16",
+    "@solid-primitives/scheduled": "^1.4.3",
+    "@solid-primitives/deep": "^0.3.1",
     "@solid-primitives/set": "^0.6.0",
     "font-awesome": "^4.7.0",
     "solid-js": "^1.8.11",
-    "videojs-contextmenu-ui": "^7.0.0"
+    "videojs-contextmenu-ui": "^7.0.0",
+    "video.js": "^8.10.0",
+    "videojs-mobile-ui": "^1.1.1"
   }
 }
