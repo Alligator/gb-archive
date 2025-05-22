@@ -82,6 +82,8 @@ const App: Component = () => {
   const [selectedVideo, setSelectedVideo] = createSignal<string | null>(null);
   const [randomPlay, setRandomPlay] = createSignal(localStorage.randomplay === 'true');
   const [autoplay, setAutoplay] = createSignal(localStorage.autoplay !== 'false');
+  const [playBumpers, setPlayBumpers] = createSignal(localStorage.bumper === 'true');
+  const [nextIsBumper, setNextIsBumper] = createSignal(true);
 
   const [shows, setShows] = createSignal<string[]>([]);
   const favorites = createFavoritesStore();
@@ -94,6 +96,7 @@ const App: Component = () => {
   createEffect(() => {
     localStorage.setItem('autoplay', autoplay().toString());
     localStorage.setItem('randomplay', randomPlay().toString());
+    localStorage.setItem('bumper', playBumpers().toString());
   });
 
   // update list of shows based on video subjects
@@ -211,6 +214,10 @@ const App: Component = () => {
     return filteredVids;
   });
 
+  const bumperVideos = createMemo(() =>
+    videos().filter(v => v.subject === 'Giant Bomb Infinite Bumpers' || v.subject === 'Giant Bomb Forever Bumpers')
+  );
+
   const allVideosFavorited = createMemo(() => filteredVideos().every(vid => favorites.has(vid.identifier)));
   const allVideosSameShow = createMemo(() => shows().includes(filterState.show));
 
@@ -229,6 +236,13 @@ const App: Component = () => {
 
     if (!autoplay()) return;
 
+    if (playBumpers() && nextIsBumper()) {
+      const nextVid = bumperVideos()[Math.floor(Math.random() * bumperVideos().length)];
+      setSelectedVideo(nextVid.identifier);
+      setNextIsBumper(false);
+      return;
+    }
+
     if (randomPlay()) {
       const nextVid = vids[Math.floor(Math.random() * vids.length)];
       setSelectedVideo(nextVid.identifier);
@@ -239,6 +253,7 @@ const App: Component = () => {
       setSelectedVideo(nextVid.identifier);
     }
 
+    setNextIsBumper(true);
   };
 
   const onCloseRequested = () => {
@@ -376,7 +391,10 @@ const App: Component = () => {
                 <input type='checkbox' checked={randomPlay()} onChange={e => setRandomPlay(e.target.checked)} />
                 Randomize videos
               </label>
-
+              <label>
+                <input type='checkbox' checked={playBumpers()} onChange={e => setPlayBumpers(e.target.checked)} />
+                Insert bumpers in between autoplay videos
+              </label>
             </fieldset>
 
 
