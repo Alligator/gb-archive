@@ -50,7 +50,7 @@ export const VideoPlayer: Component<VideoPlayerProps> = props => {
   createEffect(() => {
     if (!meta()) return;
 
-    const video = meta().files.find((item: { format: string; }) => item.format === 'MPEG4');
+    const video = meta().files.find((item: { format: string; }) => item.format === 'MPEG4' || item.format === 'h.264');
     const thumb = meta().files.find((item: { format: string; }) => item.format === 'Thumbnail');
     const src = `https://archive.org/download/${props.id}/${video.name}`;
 
